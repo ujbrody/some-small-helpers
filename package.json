@@ -1,0 +1,26 @@
+{
+  "name": "some-small-helpers",
+  "version": "1.0.0",
+  "description": "A collection of functions and objects that I found helpful throughout my development projects",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ujbrody/some-small-helpers.git"
+  },
+  "keywords": [
+    "helpers",
+    "utils",
+    "utilities",
+    "functions",
+    "objects"
+  ],
+  "author": "Uri Brodetzki",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ujbrody/some-small-helpers/issues"
+  },
+  "homepage": "https://github.com/ujbrody/some-small-helpers#readme"
+}

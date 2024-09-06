@@ -29,6 +29,10 @@ export default [
         ignoreTemplateLiterals: true,
         ignoreRegExpLiterals: true
       }],
+      '@stylistic/member-delimiter-style': ['error', {
+        multiline: { delimiter: 'semi', requireLast: true },
+        singleline: { delimiter: 'semi', requireLast: false }
+      }],
       '@stylistic/no-confusing-arrow': 'error',
       '@stylistic/no-mixed-operators': 'error',
       '@stylistic/no-multiple-empty-lines': ['error', { max: 2 }],
@@ -37,6 +41,7 @@ export default [
       '@stylistic/operator-linebreak': ['error', 'before', { overrides: { '=': 'none' } }],
       '@stylistic/padded-blocks': 'off',
       '@stylistic/semi': ['error', 'always'],
+      '@typescript-eslint/no-use-before-define': 'error',
       'array-callback-return': 'error',
       'arrow-body-style': 'error',
       'camelcase': ['error', { properties: 'always', allow: ['_id', '_type'] }],
@@ -55,7 +60,6 @@ export default [
       'no-object-constructor': 'error',
       'no-param-reassign': ['error', { props: true }],
       'no-plusplus': 'error',
-      'no-use-before-define': 'error',
       'no-useless-constructor': 'error',
       'object-shorthand': ['error', 'always', { avoidExplicitReturnArrows: true }],
       'one-var': ['error', 'never'],
@@ -64,7 +68,16 @@ export default [
       'prefer-exponentiation-operator': 'error',
       'prefer-object-spread': 'error',
       'prefer-template': 'error',
-      'radix': 'error'
+      'radix': 'error',
+      'unicorn/filename-case': ['warn', { case: 'camelCase' }],
+      'unicorn/no-null': 'off',
+      'unicorn/prevent-abbreviations': ['error', {
+        replacements: {
+          arr: false,
+          obj: false,
+          val: false
+        }
+      }]
     }
   }
 ];

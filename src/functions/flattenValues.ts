@@ -4,8 +4,9 @@ import flattenDeep from 'lodash/flattenDeep';
 
 
 /**
- * Takes an object literal, and returns all the end values in one flat array.
- * The order of the elements is not guaranteed
+ * Takes an enumerable, and returns all the end values in one flat array.
+ * The order of the elements is not guaranteed.
+ * Strings are  not treated as enumerable types in this function
  *
  * ```typescript
  * const a = {
@@ -21,11 +22,11 @@ import flattenDeep from 'lodash/flattenDeep';
  * @param obj Object to break down
  * @returns a flat array of all the end value nested within the object
  */
-export function getEndPrimitives<T = unknown>(obj: any): T[] {
+export function flattenValues<T = unknown>(obj: any): T[] {
 
-  if (typeof obj === typeof 'string') return [obj];
+  if (typeof obj === typeof 'string') return [obj]; // This is necessary because in this case, JS will treat a string as an array of chars
 
-  const values = flattenDeep(Object.values(obj).map((value) => getEndPrimitives(value)));
+  const values = flattenDeep(Object.values(obj).map((value) => flattenValues(value)));
 
   if (values.length === 0) return [obj];
 
@@ -33,4 +34,4 @@ export function getEndPrimitives<T = unknown>(obj: any): T[] {
 }
 
 
-export default getEndPrimitives;
+export default flattenValues;

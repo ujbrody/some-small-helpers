@@ -1,19 +1,25 @@
-import getEndPrimitives from './getEndPrimitives';
+import flattenValues from './flattenValues';
 
 describe('getEndValues', () => {
 
   it('returns the value as a single array cell when given a string', () => {
-    expect(getEndPrimitives('hello')).toEqual(['hello']);
+    expect(flattenValues('hello')).toEqual(['hello']);
   });
 
   it('returns the value as a single array cell when given a different primitive', () => {
-    expect(getEndPrimitives(14)).toEqual([14]);
+    expect(flattenValues(14)).toEqual([14]);
+  });
+
+  it('returns any value that is not values-containing object in a single array cell', () => {
+    const sym = Symbol();
+
+    expect(flattenValues(sym)).toEqual([sym]);
   });
 
   it('returns all values of an object', () => {
     const a = { blah: 'one', foo: 'two', bar: 'three' };
 
-    const result = getEndPrimitives(a);
+    const result = flattenValues(a);
 
     expect(result).toHaveLength(3);
     expect(result).toEqual(expect.arrayContaining(['one', 'two', 'three']));
@@ -22,13 +28,13 @@ describe('getEndValues', () => {
   it('returns all primitives in an array', () => {
     const a = ['one', 'two', 'three'];
 
-    expect(getEndPrimitives(a)).toEqual(a);
+    expect(flattenValues(a)).toEqual(a);
   });
 
   it('returns primitives in flat array from a nested array', () => {
     const a = [1, [2, [3, [4]], 5]];
 
-    expect(getEndPrimitives(a)).toEqual([1, 2, 3, 4, 5]);
+    expect(flattenValues(a)).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('returns end values from object that also contains array', () => {
@@ -45,8 +51,8 @@ describe('getEndValues', () => {
 
     const expected = [1, 2, 'blast', 'yey', false, 42];
 
-    expect(getEndPrimitives(a)).toHaveLength(expected.length);
-    expect(getEndPrimitives(a)).toEqual(expect.arrayContaining(expected));
+    expect(flattenValues(a)).toHaveLength(expected.length);
+    expect(flattenValues(a)).toEqual(expect.arrayContaining(expected));
   });
 
   it('returns end values when they are empty objects or arrays', () => {
@@ -55,7 +61,7 @@ describe('getEndValues', () => {
       blim: 8
     };
 
-    expect(getEndPrimitives(a)).toHaveLength(2);
-    expect(getEndPrimitives(a)).toEqual(expect.arrayContaining([{}, 8]));
+    expect(flattenValues(a)).toHaveLength(2);
+    expect(flattenValues(a)).toEqual(expect.arrayContaining([{}, 8]));
   });
 });

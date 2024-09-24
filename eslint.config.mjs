@@ -78,7 +78,9 @@ export default [
         replacements: {
           arr: false,
           obj: false,
-          val: false
+          val: false,
+          i: false,
+          j: false
         }
       }]
     }

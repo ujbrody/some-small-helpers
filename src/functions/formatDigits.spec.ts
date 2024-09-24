@@ -24,6 +24,14 @@ describe('formatDigits', () => {
     expect(formatDigits('1+23e4=[56]]]7', formatThousand)).toBe('12,345.67');
   });
 
+  it('does not continue the format beyond the last digits as default behavior when there are not enough digits', () => {
+    expect(formatDigits('1s23se456', formatPhone)).toBe('(123) 456');
+  });
+
+  it.skip('continue with the next characters in format until reaching a missing digit if there are not enough digits and lastDigitEnds is set to `false`', () => {
+    expect(true).toBeTruthy();
+  });
+
   it('returns empty string if the string does not contain any digits as default behavior', () => {
     expect(formatDigits('ABCDEFG', formatPhone)).toBe('');
   });
@@ -59,5 +67,33 @@ describe('formatDigits', () => {
 
   it('returns only the extracted digits if not enough to complete the format, `incompleteFormat===false` and `failedOutput==="digits"`', () => {
     expect(formatDigits('1-2345+67++8', formatPhone, { incompleteFormat: false, failedOutput: 'digits' })).toBe('12345678');
+  });
+
+  it.skip('returns the formatted digits only up to the amount that satisfy the format if more digits are given than needed for the format as default behavior', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('returns the formatted digits with the rest of the digits concatenated if `expand` option is set to `true`', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('includes leading and trailing 0s in the output as default behavior', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('trims leading and trailing  0s from the final output if `trim` option is set to `true`', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('trims only leading 0s when `trim` option is set to "leading"', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('trims only trailing 0s when `trim` option is set to "trailing"', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('returns a single 0 if all the digits are 0 (in all trimming options)', () => {
+    expect(true).toBeTruthy();
   });
 });

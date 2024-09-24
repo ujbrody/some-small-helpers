@@ -1,3 +1,9 @@
+/**
+ * isEmpty TESTS
+ *
+ * @group unit/isEmpty
+ */
+
 import isEmpty from './isEmpty';
 
 describe('isEmpty', () => {

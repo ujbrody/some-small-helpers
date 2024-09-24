@@ -1,10 +1,11 @@
+import isEmpty from './isEmpty';
+
+
 /**
  * isEmpty TESTS
  *
  * @group unit/isEmpty
  */
-
-import isEmpty from './isEmpty';
 
 describe('isEmpty', () => {
 

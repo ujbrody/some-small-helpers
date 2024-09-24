@@ -1,5 +1,13 @@
 import flattenValues from './flattenValues';
 
+
+/**
+ * flattenValues TESTS
+ *
+ * @group unit/flattedValues
+ */
+
+
 describe('getEndValues', () => {
 
   it('returns the value as a single array cell when given a string', () => {
@@ -51,17 +59,107 @@ describe('getEndValues', () => {
 
     const expected = [1, 2, 'blast', 'yey', false, 42];
 
-    expect(flattenValues(a)).toHaveLength(expected.length);
-    expect(flattenValues(a)).toEqual(expect.arrayContaining(expected));
+    const result = flattenValues(a);
+
+    expect(result).toHaveLength(expected.length);
+    expect(result).toEqual(expect.arrayContaining(expected));
   });
 
-  it('returns end values when they are empty objects or arrays', () => {
+  it('returns empty array for empty objects', () => {
+    expect(flattenValues({})).toEqual([]);
+  });
+
+  it('returns only non-empty values across the entire input graph', () => {
     const a = {
       blah: {},
       blim: 8
     };
 
-    expect(flattenValues(a)).toHaveLength(2);
-    expect(flattenValues(a)).toEqual(expect.arrayContaining([{}, 8]));
+    expect(flattenValues(a)).toHaveLength(1);
+    expect(flattenValues(a)).toEqual(expect.arrayContaining([8]));
+  });
+
+  it('returns empty array for empty arrays', () => {
+    expect(flattenValues([])).toEqual([]);
+  });
+
+  it('returns values of a Map', () => {
+    const map = new Map([['a', 1], ['b', 2]]);
+
+    expect(flattenValues(map).sort()).toEqual([1, 2]);
+  });
+
+  it('returns values of a Set', () => {
+    const set = new Set([1, 2, 3]);
+
+    expect(flattenValues(set).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('returns values of a typed array', () => {
+    const typedArray = new Uint8Array([1, 2, 3]);
+
+    expect(flattenValues(typedArray).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('returns values of a Generator object', () => {
+    function* gen() { // eslint-disable-line unicorn/consistent-function-scoping
+      yield 1;
+      yield 2;
+      yield 3;
+    }
+    const g = gen();
+
+    expect(flattenValues(g).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('returns values of a custom iterator implementation', () => {
+    const customIterable = {
+      *[Symbol.iterator]() {
+        yield 1;
+        yield 2;
+        yield 3;
+      }
+    };
+
+    expect(flattenValues(customIterable).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('returns all end values across complex graphs that include multiple types', () => {
+    function* gen() { // eslint-disable-line unicorn/consistent-function-scoping
+      yield 'one';
+      yield { prop2: 'prop-in-gen' };
+    }
+    const map = new Map();
+    map.set('prop2', 'prop-in-map');
+    map.set('four', 4);
+
+    const input = {
+      arr: ['two', { prop1: 'prop-in-arr' }, false],
+      set: new Set([1, 'three']),
+      gen: gen(),
+      map
+    };
+
+    expect(flattenValues(input).sort()).toEqual(['two', 'prop-in-arr', false, 1, 'three', 'one', 'prop-in-gen', 'prop-in-map', 4].sort());
+  });
+
+  it('returns duplicated values by default if exist', () => {
+    const obj = {
+      prop1: 'one',
+      prop2: 2,
+      prop1again: 'one'
+    };
+
+    expect(flattenValues(obj).sort()).toEqual(['one', 2, 'one'].sort());
+  });
+
+  it('returns unique values (eliminating duplications) if option is set', () => {
+    const obj = {
+      prop1: 'one',
+      prop2: 2,
+      prop1again: 'one'
+    };
+
+    expect(flattenValues(obj, { returnUnique: true }).sort()).toEqual(['one', 2].sort());
   });
 });

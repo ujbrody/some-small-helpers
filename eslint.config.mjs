@@ -77,10 +77,11 @@ export default [
       'unicorn/prevent-abbreviations': ['error', {
         replacements: {
           arr: false,
-          obj: false,
-          val: false,
           i: false,
-          j: false
+          j: false,
+          obj: false,
+          str: false,
+          val: false
         }
       }]
     }

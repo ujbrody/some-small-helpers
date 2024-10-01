@@ -81,6 +81,7 @@ export default [
           j: false,
           obj: false,
           str: false,
+          tmp: false,
           val: false
         }
       }]

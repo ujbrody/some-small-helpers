@@ -92,6 +92,33 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * expect(formatDigits('1234567890666', formatPhone, { extension: true })).toBe('(123) 456-7890666');
  * expect(formatDigits('1234567890666', formatPhone, { extension: ' x' })).toBe('(123) 456-7890 x666');
  * ```
+ *
+ * `trimZeros`
+ * ----------
+ * *Defaults to* `false`
+ * Can receive a boolean value or 'leading' or 'trailing' value
+ * Dictates whether leading zeros, trailing zeros or zeros from both ends will be removed from the digits string *before* applying the format over it.
+ * If the entire digits string includes nothing but zeros, it will convert it to a string of a single zero '0'.
+ *
+ * ```typescript
+ * expect(formatDigits('0012340', formatThousand)).toBe('00,123.40'); // default: trimZeros === false
+ * expect(formatDigits('0012340', formatThousand, { trimZeros: true })).toBe('12,34');
+ * expect(formatDigits('0012340', formatThousand, { trimZeros: 'leading' })).toBe('12,340');
+ * expect(formatDigits('0012340', formatThousand, { trimZeros: 'trailing' })).toBe('00,123.4');
+ * expect(formatDigits('0000000000', formatThousand, { trimZeros: true })).toBe('0');
+ * ```
+ *
+ * `placeholder`
+ * ------------
+ * *Defaults to* '#'
+ * Define what character or string will be used to represent the placeholder for digits in the format.
+ * Default value will be used if the given placeholder value is empty string
+ *
+ * ```typescript
+ * expect(formatDigits('123456', '??#??#??', { placeholder: '?' })).toBe('12#34#56');
+ * expect(formatDigits('1234', '?$#?$?$#?$', { placeholder: '?$' })).toBe('1#23#4');
+ * expect(formatDigits('1234567890', formatPhone, { placeholder: '' })).toBe('(123) 456-7890');
+ * ```
  * @param input A string that includes digit characters to be formatted
  * @param format The format to apply on all the digits
  * @param options Modifiers for how to apply the format on the string

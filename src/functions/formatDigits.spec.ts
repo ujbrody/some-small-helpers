@@ -28,8 +28,17 @@ describe('formatDigits', () => {
     expect(formatDigits('1s23se456', formatPhone)).toBe('(123) 456');
   });
 
-  it.skip('continue with the next characters in format until reaching a missing digit if there are not enough digits and lastDigitEnds is set to `false`', () => {
-    expect(true).toBeTruthy();
+  it('continue with the next characters in format until reaching a missing digit if there are not enough digits and lastDigitEnds is set to `false`', () => {
+    expect(formatDigits('1s2', formatThousand, { lastDigitEnds: false })).toBe('12,');
+    expect(formatDigits('1s23se456', `(###) ###---####`, { lastDigitEnds: false })).toBe('(123) 456---');
+  });
+
+  it('trim blank spaces by default', () => {
+    expect(formatDigits('1s23', formatPhone, { lastDigitEnds: false })).toBe('(123)');
+  });
+
+  it('does not trim blank spaces if option `trim` is set to false', () => {
+    expect(formatDigits('1s23', formatPhone, { lastDigitEnds: false, trim: false })).toBe('(123) ');
   });
 
   it('returns empty string if the string does not contain any digits as default behavior', () => {
@@ -69,31 +78,39 @@ describe('formatDigits', () => {
     expect(formatDigits('1-2345+67++8', formatPhone, { incompleteFormat: false, failedOutput: 'digits' })).toBe('12345678');
   });
 
-  it.skip('returns the formatted digits only up to the amount that satisfy the format if more digits are given than needed for the format as default behavior', () => {
-    expect(true).toBeTruthy();
+  it('returns the formatted digits only up to the amount that satisfy the format if more digits are given than needed for the format as default behavior', () => {
+    expect(formatDigits('1234567890666', formatPhone)).toBe('(123) 456-7890');
   });
 
-  it.skip('returns the formatted digits with the rest of the digits concatenated if `expand` option is set to `true`', () => {
-    expect(true).toBeTruthy();
+  it('returns the formatted digits with the rest of the digits concatenated if `extension` option is set to `true`', () => {
+    expect(formatDigits('1234567890666', formatPhone, { extension: true })).toBe('(123) 456-7890666');
+  });
+
+  it('returns the formatted digits with the rest of the digits concatenated and some separator in between if `extension` option defines a separator', () => {
+    expect(formatDigits('1234567890666', formatPhone, { extension: ' x' })).toBe('(123) 456-7890 x666');
   });
 
   it.skip('includes leading and trailing 0s in the output as default behavior', () => {
     expect(true).toBeTruthy();
   });
 
-  it.skip('trims leading and trailing  0s from the final output if `trim` option is set to `true`', () => {
+  it.skip('trims leading and trailing  0s from the final output if `trimZeros` option is set to `true`', () => {
     expect(true).toBeTruthy();
   });
 
-  it.skip('trims only leading 0s when `trim` option is set to "leading"', () => {
+  it.skip('trims only leading 0s when `trimZeros` option is set to "leading"', () => {
     expect(true).toBeTruthy();
   });
 
-  it.skip('trims only trailing 0s when `trim` option is set to "trailing"', () => {
+  it.skip('trims only trailing 0s when `trimZeros` option is set to "trailing"', () => {
     expect(true).toBeTruthy();
   });
 
   it.skip('returns a single 0 if all the digits are 0 (in all trimming options)', () => {
+    expect(true).toBeTruthy();
+  });
+
+  it.skip('uses a different character instead of # when set in the `placeholder` option', () => {
     expect(true).toBeTruthy();
   });
 });

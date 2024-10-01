@@ -1,3 +1,6 @@
+import trim from 'lodash/trim';
+
+
 function extractDigits(str: string) {
   return str.replace(/\D/g, ''); // eslint-disable-line unicorn/prefer-string-replace-all
 }
@@ -10,11 +13,17 @@ function amountOfPounds(strWithPounds: string) {
 interface FormatDigitsOptions {
   failedOutput?: 'empty' | 'original' | 'digits';
   incompleteFormat?: boolean;
+  lastDigitEnds?: boolean;
+  trim?: boolean;
+  extension?: boolean | string;
 }
 
 const defaultOptions: Required<FormatDigitsOptions> = {
   failedOutput: 'empty',
-  incompleteFormat: true
+  incompleteFormat: true,
+  lastDigitEnds: true,
+  trim: true,
+  extension: false
 };
 
 
@@ -53,6 +62,30 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * expect(formatDigits('ABCDE', '#####`, { failedOutput: 'original' })).toBe('ABCDE');
  * expect(formatDigits('12++3-4', '#####`, { incompleteFormat: false, failedOutput: 'digits' })).toBe('1234');
  * ```
+ *
+ * `lastDigitEnds`
+ * --------------
+ * *Defaults to* `true`.
+ * When set to `true`, if the digits string is too short, the last digit in the string always ends the output string.
+ * When set to false, either the last digit of the string, or the last character in the format before the next digit placeholder ends the string—depending on who comes last
+ *
+ * ```typescript
+ * expect(formatDigits('123456', '(###) ###-####', { lastDigitEnds: true })).toBe('(123) 456');
+ * expect(formatDigits('123456', '(###) ###-####', { lastDigitEnds: false })).toBe('(123) 456-');
+ * expect(formatDigits('123456', '(###) ###---####', { lastDigitEnds: false })).toBe('(123) 456---');
+ * ```
+ *
+ * `extension`
+ * ----------
+ * *Defaults to* `false`
+ * When set to `true`, if the digits input is longer than the amount of placeholders in the format, the rest of the digits are concatenated to the end of the formatted output.
+ * This option could also have a string value, which represents the separator between the formatted output and the concatenated digits stream
+ *
+ * ```typescript
+ * expect(formatDigits('1234567890666', formatPhone, { extension: false })).toBe('(123) 456-7890');
+ * expect(formatDigits('1234567890666', formatPhone, { extension: true })).toBe('(123) 456-7890666');
+ * expect(formatDigits('1234567890666', formatPhone, { extension: ' x' })).toBe('(123) 456-7890 x666');
+ * ```
  * @param input A string that includes digit characters to be formatted
  * @param format The format to apply on all the digits
  * @param options Modifiers for how to apply the format on the string
@@ -62,6 +95,10 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
 
   const failedOutput = options?.failedOutput || defaultOptions.failedOutput;
   const incompleteFormat = options?.incompleteFormat ?? defaultOptions.incompleteFormat;
+  const lastDigitEnds = options?.lastDigitEnds ?? defaultOptions.lastDigitEnds;
+  const trimSpace = options?.trim ?? defaultOptions.trim;
+  const toExtend = !!options?.extension;
+  let separator = '';
 
 
   const digits = extractDigits(input);
@@ -79,17 +116,36 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
 
   let formatted = '';
   let digitIndex = 0;
+  let toBreak = false;
 
   for (const char of format) {
     if (char === '#') {
+      if (toBreak) break;
+
       formatted += digits[digitIndex] || '';
       digitIndex += 1;
+
+      if (digitIndex >= digits.length) {
+        if (lastDigitEnds) break;
+
+        toBreak = true;
+      }
     } else {
       formatted += char;
     }
   }
 
-  return formatted;
+  if (digitIndex < digits.length - 1 && toExtend) {
+
+    if (typeof options?.extension === 'string') {
+      separator = options!.extension!;
+    }
+
+    const extension = digits.slice(digitIndex);
+    formatted += `${separator}${extension}`;
+  }
+
+  return trimSpace ? trim(formatted) : formatted;
 }
 
 export default formatDigits;

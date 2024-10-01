@@ -19,6 +19,7 @@ interface FormatDigitsOptions {
   trim?: boolean;
   extension?: boolean | string;
   trimZeros?: boolean | 'leading' | 'trailing';
+  placeholder?: string;
 }
 
 const defaultOptions: Required<FormatDigitsOptions> = {
@@ -27,7 +28,8 @@ const defaultOptions: Required<FormatDigitsOptions> = {
   lastDigitEnds: true,
   trim: true,
   extension: false,
-  trimZeros: false
+  trimZeros: false,
+  placeholder: '#'
 };
 
 
@@ -105,6 +107,7 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
   let separator = '';
   const trimLeadingZeros = (options?.trimZeros && options?.trimZeros !== 'trailing') ? '0' : '';
   const trimTrailingZeros = (options?.trimZeros && options?.trimZeros !== 'leading') ? '0' : '';
+  const placeholder = options?.placeholder || defaultOptions.placeholder;
 
 
   const tmp = extractDigits(input);
@@ -129,8 +132,13 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
   let digitIndex = 0;
   let toBreak = false;
 
-  for (const char of format) {
-    if (char === '#') {
+  let i = 0;
+  while (i < format.length) {
+    const segment = format.slice(i, i + placeholder.length);
+
+    if (segment === placeholder) {
+      i += placeholder.length;
+
       if (toBreak) break;
 
       formatted += digits[digitIndex] || '';
@@ -142,7 +150,8 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
         toBreak = true;
       }
     } else {
-      formatted += char;
+      formatted += format[i];
+      i += 1;
     }
   }
 

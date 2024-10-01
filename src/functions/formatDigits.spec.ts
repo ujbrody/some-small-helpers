@@ -110,7 +110,15 @@ describe('formatDigits', () => {
     expect(formatDigits('0000000000', formatThousand, { trimZeros: true })).toBe('0');
   });
 
-  it.skip('uses a different character instead of # when set in the `placeholder` option', () => {
-    expect(true).toBeTruthy();
+  it('uses a different character instead of # when set in the `placeholder` option', () => {
+    expect(formatDigits('123456', '??#??#??', { placeholder: '?' })).toBe('12#34#56');
+  });
+
+  it('allows placeholder to be composed of multiple characters', () => {
+    expect(formatDigits('1234', '?$#?$?$#?$', { placeholder: '?$' })).toBe('1#23#4');
+  });
+
+  it('uses the default placeholder when placeholder given is an empty string', () => {
+    expect(formatDigits('1234567890', formatPhone, { placeholder: '' })).toBe('(123) 456-7890');
   });
 });

@@ -1,4 +1,6 @@
 import trim from 'lodash/trim';
+import trimStart from 'lodash/trimStart';
+import trimEnd from 'lodash/trimEnd';
 
 
 function extractDigits(str: string) {
@@ -16,6 +18,7 @@ interface FormatDigitsOptions {
   lastDigitEnds?: boolean;
   trim?: boolean;
   extension?: boolean | string;
+  trimZeros?: boolean | 'leading' | 'trailing';
 }
 
 const defaultOptions: Required<FormatDigitsOptions> = {
@@ -23,7 +26,8 @@ const defaultOptions: Required<FormatDigitsOptions> = {
   incompleteFormat: true,
   lastDigitEnds: true,
   trim: true,
-  extension: false
+  extension: false,
+  trimZeros: false
 };
 
 
@@ -99,9 +103,16 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
   const trimSpace = options?.trim ?? defaultOptions.trim;
   const toExtend = !!options?.extension;
   let separator = '';
+  const trimLeadingZeros = (options?.trimZeros && options?.trimZeros !== 'trailing') ? '0' : '';
+  const trimTrailingZeros = (options?.trimZeros && options?.trimZeros !== 'leading') ? '0' : '';
 
 
-  const digits = extractDigits(input);
+  const tmp = extractDigits(input);
+  let digits = trimStart(trimEnd(tmp, trimTrailingZeros), trimLeadingZeros);
+
+  if (!digits && tmp) {
+    digits = '0';
+  }
 
   function outputOnFailure() {
     if (failedOutput === 'empty') return '';

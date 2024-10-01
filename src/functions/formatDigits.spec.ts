@@ -90,24 +90,24 @@ describe('formatDigits', () => {
     expect(formatDigits('1234567890666', formatPhone, { extension: ' x' })).toBe('(123) 456-7890 x666');
   });
 
-  it.skip('includes leading and trailing 0s in the output as default behavior', () => {
-    expect(true).toBeTruthy();
+  it('includes leading and trailing 0s in the output as default behavior', () => {
+    expect(formatDigits('0012340', formatThousand)).toBe('00,123.40');
   });
 
-  it.skip('trims leading and trailing  0s from the final output if `trimZeros` option is set to `true`', () => {
-    expect(true).toBeTruthy();
+  it('trims leading and trailing  0s from the final output if `trimZeros` option is set to `true`', () => {
+    expect(formatDigits('0012340', formatThousand, { trimZeros: true })).toBe('12,34');
   });
 
-  it.skip('trims only leading 0s when `trimZeros` option is set to "leading"', () => {
-    expect(true).toBeTruthy();
+  it('trims only leading 0s when `trimZeros` option is set to "leading"', () => {
+    expect(formatDigits('0012340', formatThousand, { trimZeros: 'leading' })).toBe('12,340');
   });
 
-  it.skip('trims only trailing 0s when `trimZeros` option is set to "trailing"', () => {
-    expect(true).toBeTruthy();
+  it('trims only trailing 0s when `trimZeros` option is set to "trailing"', () => {
+    expect(formatDigits('0012340', formatThousand, { trimZeros: 'trailing' })).toBe('00,123.4');
   });
 
-  it.skip('returns a single 0 if all the digits are 0 (in all trimming options)', () => {
-    expect(true).toBeTruthy();
+  it('returns a single 0 if all the digits are 0 (in all trimming options)', () => {
+    expect(formatDigits('0000000000', formatThousand, { trimZeros: true })).toBe('0');
   });
 
   it.skip('uses a different character instead of # when set in the `placeholder` option', () => {

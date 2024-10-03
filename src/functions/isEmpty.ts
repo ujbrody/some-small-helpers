@@ -139,7 +139,7 @@ export default function isEmpty(val: any, options?: IsEmptyOptions) {
  * @param options (optional) modifiers similar to those given to the `isEmpty` function
  * @returns Indication if a value is *not* empty
  */
-export function notEmpty(val: any, options?: IsEmptyOptions): val is NonNullable<any> {
+export function notEmpty<T>(val: T, options?: IsEmptyOptions): val is NonNullable<T> {
 
   return !isEmpty(val, options);
 }

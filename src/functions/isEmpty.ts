@@ -122,7 +122,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * @param options (optional) modifies the definitions of what is considered empty and what is not
  * @returns Indication if the value is empty
  */
-export default function isEmpty(val: any, options?: IsEmptyOptions) {
+export default function isEmpty(val: any, options?: IsEmptyOptions): val is NonNullable<any> {
 
   const settings = {
     ...defaultIsEmptyOptions,

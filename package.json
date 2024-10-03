@@ -10,8 +10,7 @@
     "lint": "eslint ./src/**/*.ts",
     "test": "jest",
     "test:only": "jest --group=only",
-    "prepublish": "npm run build",
-    "publish:otp": "npm publish --otp"
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",

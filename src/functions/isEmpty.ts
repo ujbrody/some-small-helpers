@@ -122,7 +122,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * @param options (optional) modifies the definitions of what is considered empty and what is not
  * @returns Indication if the value is empty
  */
-export default function isEmpty(val: any, options?: IsEmptyOptions): val is NonNullable<any> {
+export default function isEmpty(val: any, options?: IsEmptyOptions) {
 
   const settings = {
     ...defaultIsEmptyOptions,
@@ -130,4 +130,16 @@ export default function isEmpty(val: any, options?: IsEmptyOptions): val is NonN
   };
 
   return _isEmpty(val, [], settings);
+}
+
+
+/**
+ * Returns the exact reverse of `isEmpty` with the added benefit of a type guard.
+ * @param val The value to check
+ * @param options (optional) modifiers similar to those given to the `isEmpty` function
+ * @returns Indication if a value is *not* empty
+ */
+export function notEmpty(val: any, options?: IsEmptyOptions): val is NonNullable<any> {
+
+  return !isEmpty(val, options);
 }

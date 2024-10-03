@@ -1,6 +1,7 @@
 /* All Types */
 
 export { default as isEmpty } from './functions/isEmpty';
+export { notEmpty } from './functions/isEmpty';
 
 
 /* Strings */

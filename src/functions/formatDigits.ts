@@ -182,7 +182,7 @@ function formatDigits(input: string, format: string, options?: FormatDigitsOptio
     }
   }
 
-  if (digitIndex < digits.length - 1 && toExtend) {
+  if (digitIndex < digits.length && toExtend) {
 
     if (typeof options?.extension === 'string') {
       separator = options!.extension!;

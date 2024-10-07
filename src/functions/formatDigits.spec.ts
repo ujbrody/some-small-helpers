@@ -89,6 +89,10 @@ describe('formatDigits', () => {
     expect(formatDigits('1234567890666', formatPhone, { extension: ' x' })).toBe('(123) 456-7890 x666');
   });
 
+  it('returns formatted digits with one extra given using a separator', () => {
+    expect(formatDigits('12345678906', formatPhone, { extension: ' x' })).toBe('(123) 456-7890 x6');
+  });
+
   it('includes leading and trailing 0s in the output as default behavior', () => {
     expect(formatDigits('0012340', formatThousand)).toBe('00,123.40');
   });

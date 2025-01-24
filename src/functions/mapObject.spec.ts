@@ -9,15 +9,16 @@ import mapObject from './mapObject';
  */
 
 
+function stringMapper(val: string) {
+  return `${val}!`;
+}
+
+function predicate(val: any) {
+  return typeof val === typeof 'string';
+}
+
+
 describe('mapObject', () => {
-
-  function stringMapper(val: string) {
-    return `${val}!`;
-  }
-
-  function predicate(val: any) {
-    return typeof val === typeof 'string';
-  }
 
   it('applies the mapper on all properties of an object', () => {
     const obj = {
@@ -183,5 +184,9 @@ describe('mapObject', () => {
         expirationDate: new Date(2020, 4, 2)
       }]
     });
+  });
+
+  it.skip('safe from circular referencing', () => {
+    expect(true).toBeTruthy();
   });
 });

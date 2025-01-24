@@ -44,6 +44,7 @@ export default [
       '@stylistic/operator-linebreak': ['error', 'before', { overrides: { '=': 'none' } }],
       '@stylistic/padded-blocks': 'off',
       '@stylistic/semi': ['error', 'always'],
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
       'array-callback-return': 'error',
       'arrow-body-style': 'error',

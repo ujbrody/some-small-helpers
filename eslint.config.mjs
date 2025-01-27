@@ -80,6 +80,7 @@ export default [
           arr: false,
           i: false,
           j: false,
+          num: false,
           obj: false,
           str: false,
           tmp: false,

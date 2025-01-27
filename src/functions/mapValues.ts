@@ -1,17 +1,27 @@
 import lodashMapValues from 'lodash/mapValues';
 
+import isEmpty from './isEmpty';
 
-function _mapValues(obj: any, mapper: (val: any) => any, predicate?: (val: any) => boolean): any {
 
-  if (obj === null || obj === undefined) return obj;
+interface MapValuesOptions {
+  predicate?: (val: any) => boolean;
+  ignoreEmpty?: boolean;
+}
 
-  if ((typeof obj === typeof 'string' || Object.keys(obj).length === 0) && !Array.isArray(obj)) {
+
+function _mapValues(obj: any, mapper: (val: any) => any, options: MapValuesOptions): any {
+
+  const { predicate, ignoreEmpty } = options;
+
+  if (ignoreEmpty && (obj === null || obj === undefined)) return obj;
+
+  if ((typeof obj === typeof 'string' || isEmpty(obj) || Object.keys(obj).length === 0) && !Array.isArray(obj)) {
     if (!predicate || predicate(obj)) return mapper(obj);
 
     return obj;
   }
 
-  const result = lodashMapValues(obj, (o) => _mapValues(o, mapper, predicate));
+  const result = lodashMapValues(obj, (o) => _mapValues(o, mapper, options));
 
   if (Array.isArray(obj)) return Object.values(result);
 
@@ -42,7 +52,17 @@ function _mapValues(obj: any, mapper: (val: any) => any, predicate?: (val: any) 
  * });
  * ```
  *
- * A third, optional parameter can be passed to only apply the mapping on certain properties, decided by a predicate function:
+ * This function works only on values of properties and cells of arrays. It does not evaluate a primitive argument:
+ *
+ * ```typescript
+ * expect(mapValues('string', mappingFunction)).toEqual('string');
+ * ```
+ *
+ * Optional Modifiers:
+ * ===================
+ * `predicate`
+ * -------------------
+ * A function to determine if to apply the mapper on a property:
  *
  * ```typescript
  * const obj = {
@@ -60,7 +80,7 @@ function _mapValues(obj: any, mapper: (val: any) => any, predicate?: (val: any) 
  *  return typeof val === typeof 'string';
  * }
  *
- * expect(mapValues(obj, mappingFunction, predicate)).toEqual({
+ * expect(mapValues(obj, mappingFunction, { predicate })).toEqual({
  *  one: 'one!',
  *  two: 2,
  *  three: { prop: 'three' },
@@ -68,21 +88,48 @@ function _mapValues(obj: any, mapper: (val: any) => any, predicate?: (val: any) 
  * });
  * ```
  *
- * This function works only on values of properties and cells of arrays. It does not evaluate a primitive argument:
+ * `ignoreEmpty`
+ * ------------
+ * *defaults to* `true`
+ * When set to `false`, the mapper will be applied on `null`, `undefined` and `NaN` values:
  *
  * ```typescript
- * expect(mapValues('string', mappingFunction)).toEqual('string');
+ * const obj = {
+ *  one: 'one',
+ *  two: null,
+ *  three: { prop: undefined }
+ * }
+ *
+ * function mappingFunction(val: string) {
+ *  return `${val}!`;
+ * }
+ *
+ * expect(mapValues(obj, mappingFunction)).toEqual({
+ *  one: 'one!',
+ *  two: null,
+ *  three: { prop: undefined }
+ * });
+ *
+ * expect(mapValues(obj, mappingFunction, { ignoreEmpty: false })).toEqual({
+ *  one: 'one!',
+ *  two: 'null!',
+ *  three: { prop: 'undefined!' }
+ * });
  * ```
+ *
  * Using a predicate, it is possible to make sure the mapping is only applied on certain type of properties
  * @param obj The object which properties to map
  * @param mapper The mapping function to affect on each property
  * @param predicate (optional) A function to determine if to apply the mapper on a property
  */
-export default function mapValues(obj: any, mapper: (val: any) => any, predicate?: (val: any) => boolean): any {
+export default function mapValues(obj: any, mapper: (val: any) => any, options?: MapValuesOptions): any {
+
+  const { predicate } = options || {};
+  const ignoreEmpty = options?.ignoreEmpty ?? true;
 
   if (obj === null || obj === undefined) return obj;
 
   if (Object.keys(obj).length === 0 && !Array.isArray(obj)) return obj;
 
-  return _mapValues(obj, mapper, predicate);
+  return _mapValues(obj, mapper, { predicate, ignoreEmpty });
 }

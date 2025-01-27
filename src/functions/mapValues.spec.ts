@@ -54,13 +54,33 @@ describe('mapObject', () => {
     expect(mapValues(bool, stringMapper)).toBe(true);
   });
 
-  it.skip('does not apply the mapper on empty values', () => {
+  it('does not apply the mapper on empty values', () => {
     expect(mapValues(undefined, stringMapper)).toBeUndefined();
     expect(mapValues(null, stringMapper)).toBeNull();
     expect(mapValues(Number.NaN, stringMapper)).toBeNaN();
   });
 
-  it.skip('does not apply the mapper on sub fields that are empty values', () => {
+  it('does not apply mapper on empty properties by default', () => {
+    const objWithEmpty = {
+      one: 'one',
+      two: null,
+      three: undefined
+    };
+
+    expect(mapValues(objWithEmpty, stringMapper)).toEqual({ one: 'one!', two: null, three: undefined });
+  });
+
+  it('applies the mapper on empty values when option is set', () => {
+    const objWithEmpty = {
+      one: 'one',
+      two: null,
+      three: undefined
+    };
+
+    expect(mapValues(objWithEmpty, stringMapper, { ignoreEmpty: false })).toEqual({ one: 'one!', two: 'null!', three: 'undefined!' });
+  });
+
+  it('does not apply the mapper on sub fields that are empty values', () => {
     const obj = { blah: undefined, str: 'hay' };
 
     const result = mapValues(obj, (val) => `${val}o`);
@@ -68,7 +88,7 @@ describe('mapObject', () => {
     expect(result).toEqual({ blah: undefined, str: 'hayo' });
   });
 
-  it.skip('applies the mapper on sub-properties of an object', () => {
+  it('applies the mapper on sub-properties of an object', () => {
     const obj = {
       one: 'one',
       two: 2,
@@ -80,7 +100,7 @@ describe('mapObject', () => {
     expect(result).toEqual({ one: 'one!', two: '2!', three: { prop: 'three!' } });
   });
 
-  it.skip('applies the mapper on cells of arrays inside an array', async () => {
+  it('applies the mapper on cells of arrays inside an array', async () => {
     const arr = ['one', ['two', 3], 4];
 
     const result = mapValues(arr, stringMapper);
@@ -88,7 +108,7 @@ describe('mapObject', () => {
     expect(result).toEqual(['one!', ['two!', '3!'], '4!']);
   });
 
-  it.skip('applies the mapper on properties of objects inside array', () => {
+  it('applies the mapper on properties of objects inside array', () => {
     const arr = ['one', { two: 2, three: 'three' }, 4];
 
     const result = mapValues(arr, stringMapper);
@@ -96,7 +116,7 @@ describe('mapObject', () => {
     expect(result).toEqual(['one!', { two: '2!', three: 'three!' }, '4!']);
   });
 
-  it.skip('applies the mapper on cells of array inside an object', () => {
+  it('applies the mapper on cells of array inside an object', () => {
     const obj = {
       one: 'one',
       arr: ['two', 3],
@@ -108,26 +128,26 @@ describe('mapObject', () => {
     expect(result).toEqual({ one: 'one!', arr: ['two!', '3!'], four: '4!' });
   });
 
-  it.skip('only applies the mapping on properties that fulfill the predicate', () => {
+  it('only applies the mapping on properties that fulfill the predicate', () => {
     const obj = {
       one: 'one',
       two: 2,
       three: 'three'
     };
 
-    const result = mapValues(obj, stringMapper, predicate);
+    const result = mapValues(obj, stringMapper, { predicate });
 
     expect(result).toEqual({ one: 'one!', two: 2, three: 'three!' });
   });
 
-  it.skip('only applies the mapping on sub-fields that fulfill the predicate', () => {
+  it('only applies the mapping on sub-fields that fulfill the predicate', () => {
     const obj = {
       one: 'one',
       two: 2,
       three: { prop: 'three', boom: 4 }
     };
 
-    const result = mapValues(obj, stringMapper, predicate);
+    const result = mapValues(obj, stringMapper, { predicate });
 
     expect(result).toEqual({ one: 'one!', two: 2, three: { prop: 'three!', boom: 4 } });
   });
@@ -135,32 +155,32 @@ describe('mapObject', () => {
   it.skip('only applies the mapping on array cells that fulfill the predicate', () => {
     const arr = ['one', 2, 'three'];
 
-    const result = mapValues(arr, stringMapper, predicate);
+    const result = mapValues(arr, stringMapper, { predicate });
 
     expect(result).toEqual(['one!', 2, 'three!']);
   });
 
-  it.skip('only applies the mapping on properties of objects inside array that fulfill the predicate', () => {
+  it('only applies the mapping on properties of objects inside array that fulfill the predicate', () => {
     const arr = ['one', { two: 2, three: 'three' }, 4];
 
-    const result = mapValues(arr, stringMapper, predicate);
+    const result = mapValues(arr, stringMapper, { predicate });
 
     expect(result).toEqual(['one!', { two: 2, three: 'three!' }, 4]);
   });
 
-  it.skip('only applies the mapping on cells of arrays inside an object that fulfill the predicate', () => {
+  it('only applies the mapping on cells of arrays inside an object that fulfill the predicate', () => {
     const obj = {
       one: 'one',
       arr: ['two', 3],
       four: 4
     };
 
-    const result = mapValues(obj, stringMapper, predicate);
+    const result = mapValues(obj, stringMapper, { predicate });
 
     expect(result).toEqual({ one: 'one!', arr: ['two!', 3], four: 4 });
   });
 
-  it.skip('able to treat only fields identified as Date in a complex object that has empty fields (edge case)', () => {
+  it('able to treat only fields identified as Date in a complex object that has empty fields (edge case)', () => {
     const obj = {
       name: 'Bill',
       phones: [],
@@ -174,7 +194,7 @@ describe('mapObject', () => {
       }]
     };
 
-    const result = mapValues(obj, (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()), (val) => val instanceof Date);
+    const result = mapValues(obj, (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()), { predicate: (val) => val instanceof Date });
 
     expect(result).toEqual({
       ...obj,

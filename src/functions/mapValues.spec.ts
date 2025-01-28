@@ -5,7 +5,6 @@ import mapValues from './mapValues';
  * mapValues TESTS
  *
  * @group unit/mapValues
- * @group only
  */
 
 

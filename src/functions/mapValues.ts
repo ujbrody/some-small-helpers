@@ -121,7 +121,9 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  * });
  * ```
  *
- * Using a predicate, it is possible to make sure the mapping is only applied on certain type of properties
+ * *Warning:* The mapper is applied on all properties that are not `null`, `undefined`,` `NaN`, array or object.
+ * However, the way the function verifies whether an item is object or not is simply by checking if it has properties.
+ * If you want to secure the function from applying the mapper on other types that JS consider to be "objects", you should use the `predicate` or build a safety check within the mapper itself.
  * @param obj The object which properties to map
  * @param mapper The mapping function to affect on each property
  * @param predicate (optional) A function to determine if to apply the mapper on a property

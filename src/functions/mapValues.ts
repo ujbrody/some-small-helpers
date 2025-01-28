@@ -1,11 +1,14 @@
 import lodashMapValues from 'lodash/mapValues';
 
-import isEmpty from './isEmpty';
-
 
 interface MapValuesOptions {
   predicate?: (val: any) => boolean;
   ignoreEmpty?: boolean;
+}
+
+
+function isEmptyLimited(obj: any) {
+  return obj === null || obj === undefined || Number.isNaN(obj);
 }
 
 
@@ -17,7 +20,7 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
 
   if (ignoreEmpty && (obj === null || obj === undefined)) return obj;
 
-  if ((typeof obj === typeof 'string' || isEmpty(obj) || Object.keys(obj).length === 0) && !Array.isArray(obj)) {
+  if ((typeof obj === typeof 'string' || isEmptyLimited(obj) || Object.keys(obj).length === 0) && !Array.isArray(obj)) {
     if (!predicate || predicate(obj)) return mapper(obj);
 
     return obj;

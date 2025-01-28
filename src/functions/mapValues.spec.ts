@@ -224,6 +224,6 @@ describe('mapObject', () => {
   it('applies mapper on empty object properties', () => {
     const obj = { prop: {} };
 
-    expect(mapValues(obj, stringMapper)).toEqual({ prop: {} });
+    expect(mapValues(obj, stringMapper)).toEqual({ prop: '[object Object]!' });
   });
 });

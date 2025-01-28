@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-interface IsEmptyOptions {
+export interface IsEmptyOptions {
   emptyStringIsEmpty?: boolean;
   whitespaceIsEmpty?: boolean;
   zeroIsEmpty?: boolean;

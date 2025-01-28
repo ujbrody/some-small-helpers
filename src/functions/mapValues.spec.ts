@@ -152,7 +152,7 @@ describe('mapObject', () => {
     expect(result).toEqual({ one: 'one!', two: 2, three: { prop: 'three!', boom: 4 } });
   });
 
-  it.skip('only applies the mapping on array cells that fulfill the predicate', () => {
+  it('only applies the mapping on array cells that fulfill the predicate', () => {
     const arr = ['one', 2, 'three'];
 
     const result = mapValues(arr, stringMapper, { predicate });
@@ -206,7 +206,24 @@ describe('mapObject', () => {
     });
   });
 
-  it.skip('safe from circular referencing', () => {
-    expect(true).toBeTruthy();
+  it('safe from circular referencing', () => {
+    const obj: any = {
+      one: 'one',
+      two: 2,
+      three: { prop: 'three' }
+    };
+    obj.refThree = obj.three;
+    obj.deepRefThree = { ref: obj.three };
+    obj.self = obj;
+
+    const result = mapValues(obj, stringMapper);
+
+    expect(result).toEqual({ one: 'one!', two: '2!', three: { prop: 'three!' }, refThree: obj.three, deepRefThree: { ref: obj.three }, self: obj });
+  });
+
+  it('applies mapper on empty object properties', () => {
+    const obj = { prop: {} };
+
+    expect(mapValues(obj, stringMapper)).toEqual({ prop: {} });
   });
 });

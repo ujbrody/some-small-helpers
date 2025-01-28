@@ -9,7 +9,9 @@ interface MapValuesOptions {
 }
 
 
-function _mapValues(obj: any, mapper: (val: any) => any, options: MapValuesOptions): any {
+function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options: MapValuesOptions): any {
+
+  if (visited.includes(obj)) return obj;
 
   const { predicate, ignoreEmpty } = options;
 
@@ -21,7 +23,9 @@ function _mapValues(obj: any, mapper: (val: any) => any, options: MapValuesOptio
     return obj;
   }
 
-  const result = lodashMapValues(obj, (o) => _mapValues(o, mapper, options));
+  visited.push(obj);
+
+  const result = lodashMapValues(obj, (o) => _mapValues(o, mapper, visited, options));
 
   if (Array.isArray(obj)) return Object.values(result);
 
@@ -131,5 +135,5 @@ export default function mapValues(obj: any, mapper: (val: any) => any, options?:
 
   if (Object.keys(obj).length === 0 && !Array.isArray(obj)) return obj;
 
-  return _mapValues(obj, mapper, { predicate, ignoreEmpty });
+  return _mapValues(obj, mapper, [], { predicate, ignoreEmpty });
 }

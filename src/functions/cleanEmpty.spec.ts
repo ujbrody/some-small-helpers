@@ -137,4 +137,50 @@ describe('cleanEmpty', () => {
 
     expect(cleanEmpty(obj, { completelyRemove: false, replaceWith: 0 })).toEqual({ a: 'a', b: 0 });
   });
+
+  it('applies options for `isEmpty` on object properties', () => {
+    const obj = { a: 'a', b: '', c: false };
+
+    expect(cleanEmpty(obj, { defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true } })).toEqual({ a: 'a', b: '' });
+  });
+
+  it('applies options for `isEmpty` on array cells', () => {
+    const arr = ['a', '', false];
+
+    expect(cleanEmpty(arr, { defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true } })).toEqual(['a', '']);
+  });
+
+  it('applies options for `isEmpty` on deeply nested objects', () => {
+    const obj = {
+      a: 'a',
+      b: [{
+        c: 'c',
+        d: '',
+        e: null
+      }]
+    };
+
+    expect(cleanEmpty(obj, { defineEmpty: { emptyStringIsEmpty: false } })).toEqual({
+      a: 'a',
+      b: [{ c: 'c', d: '' }]
+    });
+  });
+
+  it('applies options for `isEmpty` on deeply nested arrays', () => {
+    const arr = ['a', [{ b: 'b', c: '', d: null }]];
+
+    expect(cleanEmpty(arr, { defineEmpty: { emptyStringIsEmpty: false } })).toEqual(['a', [{ b: 'b', c: '' }]]);
+  });
+
+  it('applies options for `isEmpty` on object properties when not completely removed', () => {
+    const obj = { a: 'a', b: '', c: false };
+
+    expect(cleanEmpty(obj, { completelyRemove: false, defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true } })).toEqual({ a: 'a', b: '', c: null });
+  });
+
+  it('applies options for `isEmpty` on array cells when not completely removed', () => {
+    const arr = ['a', '', false];
+
+    expect(cleanEmpty(arr, { completelyRemove: false, defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true } })).toEqual(['a', '', null]);
+  });
 });

@@ -2,18 +2,20 @@ import omitBy from 'lodash/omitBy';
 import mapValues from 'lodash/mapValues';
 import has from 'lodash/has';
 
-import isEmpty from './isEmpty';
+import isEmpty, { type IsEmptyOptions } from './isEmpty';
 
 
 interface CleanEmptyOptions {
   completelyRemove?: boolean;
   replaceWith?: any;
+  defineEmpty?: IsEmptyOptions;
 }
 
 /**
- * Takes an object or array the remove from it all properties (for object) or cell (for Array) that are empty
+ * Takes an object or array the remove from it all properties (for object) or cells (for Array) that are empty
  * For any other other type it simply returns it
- * Empty is any type that will return `true` for `isEmpty` function.
+ * Empty is defined as any type that returns `true` when provided as argument to the `isEmpty` function.
+ * *This function modifies the object in place*
  *
  * Options
  * =======
@@ -39,21 +41,37 @@ interface CleanEmptyOptions {
  * `replaceWith`
  * -------------
  * (defaults to `null`) determines the value to be placed in any empty property. Only effective if `completelyRemove` option is set to `false`
+ *
+ * `defineEmpty`
+ * ------------
+ * (defaults to `undefined`) modifies the behavior of the internal `isEmpty` function when checking for empty values.
+ * These are the same options that can be passed to the `isEmpty` function:
+ *
+ * ```typescript
+ * const obj = {
+ *  string: '',
+ *  boolean: false,
+ * };
+ *
+ * expect(cleanEmpty(obj)).toEqual({ boolean: false});
+ * expect(cleanEmpty(obj, { defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true }})).toEqual({});
+ * ```
  * @param obj Object to clean
  * @param options Options to modify the behavior of the function
  * @returns The object without all empty fields
  */
 export default function cleanEmpty(obj: any, options?: CleanEmptyOptions): any {
 
-  const completelyRemove = options?.completelyRemove === undefined ? true : options.completelyRemove;
+  const completelyRemove = options?.completelyRemove ?? true;
   const replaceWith = options && has(options, 'replaceWith') ? options.replaceWith : null;
+  const defineEmpty = options?.defineEmpty;
 
   if (Array.isArray(obj)) {
-    let returnValue = obj.map((item) => cleanEmpty(item, { completelyRemove, replaceWith }));
+    let returnValue = obj.map((item) => cleanEmpty(item, { completelyRemove, replaceWith, defineEmpty }));
 
     returnValue = completelyRemove
-      ? returnValue.filter((item) => !isEmpty(item))
-      : returnValue.map((item) => (isEmpty(item) ? replaceWith : item));
+      ? returnValue.filter((item) => !isEmpty(item, defineEmpty))
+      : returnValue.map((item) => (isEmpty(item, defineEmpty) ? replaceWith : item));
 
     return returnValue;
   }
@@ -61,10 +79,10 @@ export default function cleanEmpty(obj: any, options?: CleanEmptyOptions): any {
   if (typeof obj !== typeof 'string' && Object.keys(obj || {}).length > 0) {
     const returnValue = completelyRemove
       ? omitBy(
-        mapValues(obj, (prop) => cleanEmpty(prop)),
-        isEmpty
+        mapValues(obj, (prop) => cleanEmpty(prop, { defineEmpty })),
+        (o) => isEmpty(o, defineEmpty)
       )
-      : mapValues(obj, (prop) => (isEmpty(prop) ? replaceWith : cleanEmpty(prop, { completelyRemove, replaceWith })));
+      : mapValues(obj, (prop) => (isEmpty(prop, defineEmpty) ? replaceWith : cleanEmpty(prop, { completelyRemove, replaceWith, defineEmpty })));
 
     return returnValue;
   }

@@ -2,7 +2,8 @@
 
 export { default as isEmpty } from './functions/isEmpty';
 export { notEmpty } from './functions/isEmpty';
-
+export { isNumber } from './functions/isNumber';
+export { isDate } from './functions/isDate';
 
 /* Strings */
 

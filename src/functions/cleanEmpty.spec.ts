@@ -5,7 +5,6 @@ import cleanEmpty from './cleanEmpty';
  * cleanEmpty TESTS
  *
  * @group unit/cleanEmpty
- * @group only
  */
 
 

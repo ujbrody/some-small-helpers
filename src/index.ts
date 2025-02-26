@@ -3,11 +3,11 @@
 export { default as isEmpty } from './functions/isEmpty';
 export { notEmpty } from './functions/isEmpty';
 export { isNumber } from './functions/isNumber';
-export { isDate } from './functions/isDate';
 
 /* Strings */
 
 export { default as formatDigits } from './functions/formatDigits';
+export { default as splitFirst } from './functions/splitFirst';
 
 
 /* Objects */

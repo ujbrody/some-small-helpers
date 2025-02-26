@@ -4,6 +4,13 @@ import isEmpty from './isEmpty';
 /**
  * Similar to the split method of JS string, only it performs the split only once - on the first occurrence of the divider
  * This means that this function always returns array with at the most only two cell
+ *
+ * ```typescript
+ * const result = splitFirst('one|two|three|four', '|');
+ *
+ * expect(result).toEqual(['one', 'two|three|four']);
+ * ```
+ *
  * @param str The string to split
  * @param divider The character (or string) used as a divider between the two part
  * @returns Array of only two cells - first cell is before the first divider, the second cell is the rest of the string

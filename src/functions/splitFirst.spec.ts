@@ -1,6 +1,13 @@
 import splitFirst from './splitFirst';
 
 
+/**
+ * splitFirst TESTS
+ *
+ * @group unit/splitFirst
+ */
+
+
 describe('splitFirst', () => {
 
   it('split string only at first occurrence', () => {

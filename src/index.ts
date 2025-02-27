@@ -15,3 +15,8 @@ export { default as splitFirst } from './functions/splitFirst';
 export { default as flattenValues } from './functions/flattenValues';
 export { default as cleanEmpty } from './functions/cleanEmpty';
 export { default as mapValues } from './functions/mapValues';
+
+
+/* Arrays */
+
+export { default as extract } from './functions/extract';

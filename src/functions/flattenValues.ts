@@ -23,7 +23,7 @@ function getArrayOfValuesFromAnyEnumerableOrIterable(obj: any): unknown[] | unde
 }
 
 
-interface FlattenValuesOptions {
+export interface FlattenValuesOptions {
   returnUnique?: boolean;
 }
 
@@ -37,6 +37,12 @@ const defaultOptions: FlattenValuesOptions = {
  * The order of the elements is not guaranteed.
  * Strings are  not treated as enumerable types in this function
  *
+ * @template T The type of the values in the array
+ * @param {any} obj Object to break down
+ * @param {FlattenValuesOptions} options Options to modify the behavior of the function
+ * @returns {T[]} a flat array of all the end value nested within the object
+ * 
+ * @example
  * ```typescript
  * const a = {
  *  bar: {
@@ -47,7 +53,8 @@ const defaultOptions: FlattenValuesOptions = {
  * };
  *
  * expect(getEndValues(a).sort()).toEqual(['end', 'another end', 'third end'].sort());
- *
+ * ```
+ * 
  * Options
  * =======
  * `returnUnique`
@@ -55,11 +62,10 @@ const defaultOptions: FlattenValuesOptions = {
  * *Defaults to* `false`
  * When set to `true` all repeating values are eliminated:
  *
+ * @example
  * ```typescript
  * expect(flattenValues({ prop1: 'one', prop2: 2, prop1again: 'one}, { returnUnique: true }).sort()).toEqual(['one', 2].sort());
  * ```
- * @param obj Object to break down
- * @returns a flat array of all the end value nested within the object
  */
 export function flattenValues<T = unknown>(obj: any, options?: FlattenValuesOptions): T[] {
 

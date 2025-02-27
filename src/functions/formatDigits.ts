@@ -12,7 +12,7 @@ function amountOfPounds(strWithPounds: string) {
 }
 
 
-interface FormatDigitsOptions {
+export interface FormatDigitsOptions {
   failedOutput?: 'empty' | 'original' | 'digits';
   incompleteFormat?: boolean;
   lastDigitEnds?: boolean;
@@ -35,7 +35,13 @@ const defaultOptions: Required<FormatDigitsOptions> = {
 
 /**
  * Takes a string that should include digit characters (numbers from 0 to 9) and a format, and returns a string of all the digits formatted according to the given format
+ * 
+ * @param {string} input A string that includes digit characters to be formatted
+ * @param {string} format The format to apply on all the digits
+ * @param {FormatDigitsOptions} options Modifiers for how to apply the format on the string
+ * @returns {string} A string that contains only the digit characters from an input string in a defined format
  *
+ * @example
  * ```typescript
  * expect(formatDigits('1+23abc4567$890==', '(###) ###-####`)).toBe('(123) 456-7890);
  * ```
@@ -48,6 +54,7 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * If there are not enough digits in the string to fill up the entire format, when this option is set to `true` it returns the format in incomplete form.
  * If set to `false` it treats the situation as a failure and then return the failedOutput.
  *
+ * @example
  * ```typescript
  * expect(formatDigits('1234567', `(###) ###-####`, { incompleteFormat: true })).toBe('(123) 456-7');
  * expect(formatDigits('1234567', `(###) ###-####`, { incompleteFormat: false })).toBe(''); // See the default behavior of failedOutput
@@ -63,6 +70,7 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * `original`: returns the original string from the argument
  * `digits`: returns only the digits from the argument
  *
+ * @example
  * ```typescript
  * expect(formatDigits('ABCDE', '#####`, { failedOutput: 'empty' })).toBe('');
  * expect(formatDigits('ABCDE', '#####`, { failedOutput: 'original' })).toBe('ABCDE');
@@ -75,6 +83,7 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * When set to `true`, if the digits string is too short, the last digit in the string always ends the output string.
  * When set to false, either the last digit of the string, or the last character in the format before the next digit placeholder ends the string—depending on who comes last
  *
+ * @example
  * ```typescript
  * expect(formatDigits('123456', '(###) ###-####', { lastDigitEnds: true })).toBe('(123) 456');
  * expect(formatDigits('123456', '(###) ###-####', { lastDigitEnds: false })).toBe('(123) 456-');
@@ -87,6 +96,7 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * When set to `true`, if the digits input is longer than the amount of placeholders in the format, the rest of the digits are concatenated to the end of the formatted output.
  * This option could also have a string value, which represents the separator between the formatted output and the concatenated digits stream
  *
+ * @example
  * ```typescript
  * expect(formatDigits('1234567890666', formatPhone, { extension: false })).toBe('(123) 456-7890');
  * expect(formatDigits('1234567890666', formatPhone, { extension: true })).toBe('(123) 456-7890666');
@@ -100,6 +110,7 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * Dictates whether leading zeros, trailing zeros or zeros from both ends will be removed from the digits string *before* applying the format over it.
  * If the entire digits string includes nothing but zeros, it will convert it to a string of a single zero '0'.
  *
+ * @example
  * ```typescript
  * expect(formatDigits('0012340', formatThousand)).toBe('00,123.40'); // default: trimZeros === false
  * expect(formatDigits('0012340', formatThousand, { trimZeros: true })).toBe('12,34');
@@ -114,15 +125,12 @@ const defaultOptions: Required<FormatDigitsOptions> = {
  * Define what character or string will be used to represent the placeholder for digits in the format.
  * Default value will be used if the given placeholder value is empty string
  *
+ * @example
  * ```typescript
  * expect(formatDigits('123456', '??#??#??', { placeholder: '?' })).toBe('12#34#56');
  * expect(formatDigits('1234', '?$#?$?$#?$', { placeholder: '?$' })).toBe('1#23#4');
  * expect(formatDigits('1234567890', formatPhone, { placeholder: '' })).toBe('(123) 456-7890');
  * ```
- * @param input A string that includes digit characters to be formatted
- * @param format The format to apply on all the digits
- * @param options Modifiers for how to apply the format on the string
- * @returns A string that contains only the digit characters from an input string in a defined format
  */
 function formatDigits(input: string, format: string, options?: FormatDigitsOptions) {
 

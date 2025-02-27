@@ -5,7 +5,7 @@ import has from 'lodash/has';
 import isEmpty, { type IsEmptyOptions } from './isEmpty';
 
 
-interface CleanEmptyOptions {
+export interface CleanEmptyOptions {
   completelyRemove?: boolean;
   replaceWith?: any;
   defineEmpty?: IsEmptyOptions;
@@ -16,6 +16,10 @@ interface CleanEmptyOptions {
  * For any other other type it simply returns it
  * Empty is defined as any type that returns `true` when provided as argument to the `isEmpty` function.
  * *This function modifies the object in place*
+ * 
+ * @param {any} obj Object to clean
+ * @param {CleanEmptyOptions} options Options to modify the behavior of the function
+ * @returns {any} The object without all empty fields
  *
  * Options
  * =======
@@ -26,6 +30,7 @@ interface CleanEmptyOptions {
  *
  * **Note:** This option is only effective to the highest-level of properties that are found empty in the tree:
  *
+ * @example
  * ```typescript
  * const obj = {
  *  bar: { foo: [], boom: '' },
@@ -47,6 +52,7 @@ interface CleanEmptyOptions {
  * (defaults to `undefined`) modifies the behavior of the internal `isEmpty` function when checking for empty values.
  * These are the same options that can be passed to the `isEmpty` function:
  *
+ * @example
  * ```typescript
  * const obj = {
  *  string: '',
@@ -56,9 +62,6 @@ interface CleanEmptyOptions {
  * expect(cleanEmpty(obj)).toEqual({ boolean: false});
  * expect(cleanEmpty(obj, { defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true }})).toEqual({});
  * ```
- * @param obj Object to clean
- * @param options Options to modify the behavior of the function
- * @returns The object without all empty fields
  */
 export default function cleanEmpty(obj: any, options?: CleanEmptyOptions): any {
 

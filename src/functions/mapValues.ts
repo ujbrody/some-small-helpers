@@ -1,7 +1,7 @@
 import lodashMapValues from 'lodash/mapValues';
 
 
-interface MapValuesOptions {
+export interface MapValuesOptions {
   predicate?: (val: any) => boolean;
   ignoreEmpty?: boolean;
 }
@@ -39,6 +39,12 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  * Makes a deep mapping of all properties in an object, or cells in array based on a mapper function. This includes nested objects and arrays.
  * Similar to lodash's mapValues, but with the added ability to map arrays and performs deep recursion, while safe from circular referencing.
  *
+ * @param {any} obj The object which properties to map
+ * @param {(val: any) => any} mapper The mapping function to affect on each property
+ * @param {MapValuesOptions} (optional) options to modify the behavior of the function
+ * @param {boolean} (optional) A function to determine if to apply the mapper on a property
+ *
+ * @example
  * ```typescript
  * const obj = {
  *  one: 'one',
@@ -61,16 +67,22 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  *
  * This function works only on values of properties and cells of arrays. It does not evaluate a primitive argument:
  *
+ * @example
  * ```typescript
  * expect(mapValues('string', mappingFunction)).toEqual('string');
  * ```
  *
+ * **Warning:** The mapper is applied on all properties that are not `null`, `undefined`,` `NaN`, array or object.
+ * However, the way the function verifies whether an item is object or not is simply by checking if it has properties.
+ * If you want to secure the function from applying the mapper on other types that JS consider to be "objects", you should use the `predicate` or build a safety check within the mapper itself.
+ * 
  * Optional Modifiers:
  * ===================
  * `predicate`
  * -------------------
  * A function to determine if to apply the mapper on a property:
  *
+ * @example
  * ```typescript
  * const obj = {
  *  one: 'one',
@@ -100,6 +112,7 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  * *defaults to* `true`
  * When set to `false`, the mapper will be applied on `null`, `undefined` and `NaN` values:
  *
+ * @example
  * ```typescript
  * const obj = {
  *  one: 'one',
@@ -123,13 +136,6 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  *  three: { prop: 'undefined!' }
  * });
  * ```
- *
- * *Warning:* The mapper is applied on all properties that are not `null`, `undefined`,` `NaN`, array or object.
- * However, the way the function verifies whether an item is object or not is simply by checking if it has properties.
- * If you want to secure the function from applying the mapper on other types that JS consider to be "objects", you should use the `predicate` or build a safety check within the mapper itself.
- * @param obj The object which properties to map
- * @param mapper The mapping function to affect on each property
- * @param predicate (optional) A function to determine if to apply the mapper on a property
  */
 export default function mapValues(obj: any, mapper: (val: any) => any, options?: MapValuesOptions): any {
 

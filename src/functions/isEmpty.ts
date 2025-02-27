@@ -67,6 +67,10 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * - empty array, or array that includes only empty cells (by the definitions of the function)
  * - empty object, or object which all its properties are empty (by the definition of the function)
  * - `NaN`
+ * 
+ * @param {any} val The value to check
+ * @param {IsEmptyOptions} options (optional) modifies the definitions of what is considered empty and what is not
+ * @returns {boolean} Indication if the value is empty
  *
  * Optional Modifiers:
  * ===================
@@ -75,6 +79,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * *defaults to* `true`
  * When set to `false` it will look at all strings, no matter the content, as non-empty value.
  *
+ * @example
  * ```typescript
  * expect(isEmpty('', { emptyStringIsEmpty: false })).toBe(false);
  * ```
@@ -84,6 +89,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * *defaults to* `false`
  * When set to `false` all number (with the exception of NaN) will be considered non-empty values
  *
+ * @example
  * ```typescript
  * expect(isEmpty(0)).toBe(false);
  * expect(isEmpty(0, { zeroIsEmpty: true })).toBe(true);
@@ -104,6 +110,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * *defaults to* `true`
  * When true, Map is treated like objects, when the keys are ignored, and only values are checked for data
  *
+ * @example
  * ```typescript
  * const emptyMap = new Map();
  * const fullyEmptyMap = new Map();
@@ -116,9 +123,6 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * expect(isEmpty(fullyEmptyMap)).toBE(true);
  * expect(isEmpty(fullyEmptyMap, { treatMapsAsObjects: false })).toBe(true);
  * ```
- * @param val The value to check
- * @param options (optional) modifies the definitions of what is considered empty and what is not
- * @returns Indication if the value is empty
  */
 export default function isEmpty(val: any, options?: IsEmptyOptions) {
 

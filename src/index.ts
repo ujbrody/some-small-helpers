@@ -3,6 +3,7 @@
 export { default as isEmpty } from './functions/isEmpty';
 export { notEmpty } from './functions/isEmpty';
 export { isNumber } from './functions/isNumber';
+export { default as safeStringify } from './functions/safeStringify';
 
 /* Strings */
 

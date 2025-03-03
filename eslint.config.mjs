@@ -46,6 +46,7 @@ export default [
       '@stylistic/semi': ['error', 'always'],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
+      '@typescript-eslint/no-useless-constructor': 'error',
       'array-callback-return': 'error',
       'arrow-body-style': 'error',
       'camelcase': ['error', { properties: 'always', allow: ['_id', '_type'] }],
@@ -64,7 +65,7 @@ export default [
       'no-object-constructor': 'error',
       'no-param-reassign': ['error', { props: true }],
       'no-plusplus': 'error',
-      'no-useless-constructor': 'error',
+      'no-useless-constructor': 'off',
       'object-shorthand': ['error', 'always', { avoidExplicitReturnArrows: true }],
       'one-var': ['error', 'never'],
       'prefer-arrow-callback': 'error',
@@ -73,7 +74,7 @@ export default [
       'prefer-object-spread': 'error',
       'prefer-template': 'error',
       'radix': 'error',
-      'unicorn/filename-case': ['warn', { case: 'camelCase' }],
+      'unicorn/filename-case': ['warn', { cases: { camelCase: true, pascalCase: true } }],
       'unicorn/no-null': 'off',
       'unicorn/prevent-abbreviations': ['error', {
         replacements: {

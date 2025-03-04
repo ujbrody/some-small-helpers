@@ -4,6 +4,7 @@ export interface IsEmptyOptions {
   zeroIsEmpty?: boolean;
   falseIsEmpty?: boolean;
   treatMapsAsObjects?: boolean;
+  skipClasses?: any[];
 }
 
 const defaultIsEmptyOptions: IsEmptyOptions = {
@@ -19,7 +20,13 @@ const defaultIsEmptyOptions: IsEmptyOptions = {
 // This is to prevent infinite loop in case that arguments include within them circular references
 function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
 
-  const { emptyStringIsEmpty, whitespaceIsEmpty, zeroIsEmpty, falseIsEmpty, treatMapsAsObjects } = settings;
+  const { emptyStringIsEmpty, whitespaceIsEmpty, zeroIsEmpty, falseIsEmpty, treatMapsAsObjects, skipClasses } = settings;
+
+  if (skipClasses) {
+    if (skipClasses.some((Cls) => val instanceof Cls)) {
+      return false;
+    }
+  }
 
   if (typeof val === 'string') {
     const result = whitespaceIsEmpty ? val.trim() : val;

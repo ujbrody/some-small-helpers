@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+
 import cleanEmpty from './cleanEmpty';
 
 
@@ -181,5 +183,15 @@ describe('cleanEmpty', () => {
     const arr = ['a', '', false];
 
     expect(cleanEmpty(arr, { completelyRemove: false, defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true } })).toEqual(['a', '', null]);
+  });
+
+  it('leaves any property that holds a BSON ObjectId as is if provided within `skipClasses` option', () => {
+    const objectId = new Types.ObjectId();
+    const obj = {
+      _id: objectId
+    };
+
+    expect(cleanEmpty(obj)).not.toEqual({ _id: objectId });
+    expect(cleanEmpty(obj, { defineEmpty: { skipClasses: [Types.ObjectId] } })).toEqual({ _id: objectId });
   });
 });

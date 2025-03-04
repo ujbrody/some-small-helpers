@@ -69,6 +69,12 @@ export default function cleanEmpty(obj: any, options?: CleanEmptyOptions): any {
   const replaceWith = options && has(options, 'replaceWith') ? options.replaceWith : null;
   const defineEmpty = options?.defineEmpty;
 
+  if (defineEmpty?.skipClasses) {
+    if (defineEmpty.skipClasses.some((Cls) => obj instanceof Cls)) {
+      return obj;
+    }
+  }
+
   if (Array.isArray(obj)) {
     let returnValue = obj.map((item) => cleanEmpty(item, { completelyRemove, replaceWith, defineEmpty }));
 

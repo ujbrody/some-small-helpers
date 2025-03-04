@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+
 import isEmpty from './isEmpty';
 
 
@@ -269,5 +271,27 @@ describe('isEmpty', () => {
     arr.push(arr);
 
     expect(isEmpty(arr)).toBe(true);
+  });
+
+  it('skips classes specified in `skipClasses` option', () => {
+    class SkipClass {
+      public a?: string;
+    }
+
+    const obj = new SkipClass();
+
+    expect(isEmpty(obj)).toBe(true);
+    expect(isEmpty(obj, { skipClasses: [SkipClass] })).toBe(false);
+  });
+
+  it('skips classes specified in `skipClasses` option when the value is inside an array', () => {
+    class SkipClass {
+      public a?: string;
+    }
+
+    const arr = [new SkipClass()];
+
+    expect(isEmpty(arr)).toBe(true);
+    expect(isEmpty(arr, { skipClasses: [SkipClass] })).toBe(false);
   });
 });

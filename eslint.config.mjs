@@ -32,6 +32,7 @@ export default [
         ignoreTemplateLiterals: true,
         ignoreRegExpLiterals: true
       }],
+      '@stylistic/js/max-statements-per-line': ['error', { max: 2 }],
       '@stylistic/member-delimiter-style': ['error', {
         multiline: { delimiter: 'semi', requireLast: true },
         singleline: { delimiter: 'semi', requireLast: false }
@@ -43,6 +44,7 @@ export default [
       '@stylistic/object-curly-newline': 'error',
       '@stylistic/operator-linebreak': ['error', 'before', { overrides: { '=': 'none' } }],
       '@stylistic/padded-blocks': 'off',
+      '@stylistic/quotes': ['error', 'single', { avoidEscape: true }],
       '@stylistic/semi': ['error', 'always'],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
@@ -79,6 +81,7 @@ export default [
       'unicorn/prevent-abbreviations': ['error', {
         replacements: {
           arr: false,
+          func: false,
           i: false,
           j: false,
           num: false,

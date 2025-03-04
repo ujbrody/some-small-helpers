@@ -35,7 +35,7 @@ const defaultOptions: Required<FormatDigitsOptions> = {
 
 /**
  * Takes a string that should include digit characters (numbers from 0 to 9) and a format, and returns a string of all the digits formatted according to the given format
- * 
+ *
  * @param {string} input A string that includes digit characters to be formatted
  * @param {string} format The format to apply on all the digits
  * @param {FormatDigitsOptions} options Modifiers for how to apply the format on the string

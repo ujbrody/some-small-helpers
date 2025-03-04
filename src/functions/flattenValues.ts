@@ -41,7 +41,7 @@ const defaultOptions: FlattenValuesOptions = {
  * @param {any} obj Object to break down
  * @param {FlattenValuesOptions} options Options to modify the behavior of the function
  * @returns {T[]} a flat array of all the end value nested within the object
- * 
+ *
  * @example
  * ```typescript
  * const a = {
@@ -54,7 +54,7 @@ const defaultOptions: FlattenValuesOptions = {
  *
  * expect(getEndValues(a).sort()).toEqual(['end', 'another end', 'third end'].sort());
  * ```
- * 
+ *
  * Options
  * =======
  * `returnUnique`

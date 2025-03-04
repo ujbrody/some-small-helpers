@@ -1,9 +1,11 @@
+/* eslint-disable unicorn/no-useless-undefined, unicorn/consistent-function-scoping */
+
 import safeStringify from './safeStringify';
 
 
 /**
  * safeStringify TESTS
- * 
+ *
  * @group unit/safeStringify
  */
 
@@ -18,10 +20,10 @@ describe('safeJsonStringify', () => {
     expect(safeStringify(null)).toBe('null');
     expect(safeStringify(undefined)).toBe('undefined');
   });
-  
+
   it('stringifies Maps correctly', () => {
     const map = new Map([['a', 1], ['b', 2]]);
-    expect(safeStringify(map)).toBe('Map([\"a\",1],[\"b\",2])');
+    expect(safeStringify(map)).toBe('Map(["a",1],["b",2])');
   });
 
   it('stringifies Sets correctly', () => {
@@ -74,7 +76,7 @@ describe('safeJsonStringify', () => {
     const obj = {
       anonArrowFunc: () => 'hello',
       anonFunc: function() { return 'hello'; }
-    }
+    };
 
     expect(safeStringify(arrowFunc)).toBe("() => 'hello'");
     expect(safeStringify(func)).toBe("function func() { return 'hello'; }");

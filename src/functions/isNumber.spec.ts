@@ -1,3 +1,5 @@
+/* eslint-disable unicorn/no-useless-undefined */
+
 import { isNumber } from './isNumber';
 
 describe('isNumber', () => {
@@ -12,7 +14,7 @@ describe('isNumber', () => {
   });
 
   it('should return false for NaN', () => {
-    expect(isNumber(NaN)).toBe(false);
+    expect(isNumber(Number.NaN)).toBe(false);
   });
 
   it('should return false for infinite values', () => {

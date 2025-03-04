@@ -37,7 +37,7 @@ const defaultOptions: IsNumberOptions = {
  * ===================
  * `allowNumericString`
  * -------------------
- * *Defaults to* `false`  
+ * *Defaults to* `false`
  * When set to `true`, the function will return `true` for numeric strings.
  *
  * @example
@@ -61,4 +61,4 @@ export function isNumber(value: unknown, options?: IsNumberOptions): value is nu
   if (!Number.isFinite(value)) return false;
 
   return true;
-} 
+}

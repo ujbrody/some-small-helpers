@@ -13,9 +13,9 @@ describe('extract', () => {
   it('returns first item that answers the predicate', () => {
     const arr = ['one', 'two', 'three'];
 
-    const ext = extract(arr, (item: string) => item === 'two');
+    const extension = extract(arr, (item: string) => item === 'two');
 
-    expect(ext).toBe('two');
+    expect(extension).toBe('two');
   });
 
   it('takes the item out of the array', () => {
@@ -29,24 +29,24 @@ describe('extract', () => {
   it('returns only the first occurrence', () => {
     const arr = ['one', 'two', 'one', 'three'];
 
-    const ext = extract(arr, (item: string) => item === 'one');
+    const extension = extract(arr, (item: string) => item === 'one');
 
-    expect(ext).toBe('one');
+    expect(extension).toBe('one');
     expect(arr).toEqual(['two', 'one', 'three']);
   });
 
   it('returns undefined when object is not found', () => {
     const arr = ['one', 'two', 'three'];
 
-    const ext = extract(arr, (item: string) => item === 'four');
+    const extension = extract(arr, (item: string) => item === 'four');
 
-    expect(ext).toBeUndefined();
+    expect(extension).toBeUndefined();
   });
 
   it('works with empty array', () => {
     const arr: string[] = [];
-    const ext = extract(arr, (item: string) => item === 'anything');
-    expect(ext).toBeUndefined();
+    const extension = extract(arr, (item: string) => item === 'anything');
+    expect(extension).toBeUndefined();
   });
 
   it('works with array of objects', () => {
@@ -56,9 +56,9 @@ describe('extract', () => {
       { id: 3, name: 'third' }
     ];
 
-    const ext = extract(arr, (item) => item.id === 2);
+    const extension = extract(arr, (item) => item.id === 2);
 
-    expect(ext).toEqual({ id: 2, name: 'second' });
+    expect(extension).toEqual({ id: 2, name: 'second' });
     expect(arr).toEqual([
       { id: 1, name: 'first' },
       { id: 3, name: 'third' }
@@ -67,25 +67,23 @@ describe('extract', () => {
 
   it('works with array of numbers', () => {
     const arr = [1, 2, 3, 4, 5];
-    const ext = extract(arr, (num) => num % 2 === 0);
-    expect(ext).toBe(2);
+    const extension = extract(arr, (num) => num % 2 === 0);
+    expect(extension).toBe(2);
     expect(arr).toEqual([1, 3, 4, 5]);
   });
 
   it('preserves array reference', () => {
     const arr = ['one', 'two', 'three'];
     const originalReference = arr;
-    
     extract(arr, (item) => item === 'two');
-    
     expect(arr).toBe(originalReference);
   });
 
   it('handles predicate with complex logic', () => {
     const arr = ['apple', 'banana', 'cherry', 'date'];
-    const ext = extract(arr, (item) => item.length > 5 && item.includes('n'));
-    
-    expect(ext).toBe('banana');
+    const extension = extract(arr, (item) => item.length > 5 && item.includes('n'));
+    expect(extension).toBe('banana');
     expect(arr).toEqual(['apple', 'cherry', 'date']);
   });
 });
+

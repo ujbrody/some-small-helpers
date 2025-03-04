@@ -75,7 +75,7 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  * **Warning:** The mapper is applied on all properties that are not `null`, `undefined`,` `NaN`, array or object.
  * However, the way the function verifies whether an item is object or not is simply by checking if it has properties.
  * If you want to secure the function from applying the mapper on other types that JS consider to be "objects", you should use the `predicate` or build a safety check within the mapper itself.
- * 
+ *
  * Optional Modifiers:
  * ===================
  * `predicate`

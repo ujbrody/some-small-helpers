@@ -67,7 +67,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * - empty array, or array that includes only empty cells (by the definitions of the function)
  * - empty object, or object which all its properties are empty (by the definition of the function)
  * - `NaN`
- * 
+ *
  * @param {any} val The value to check
  * @param {IsEmptyOptions} options (optional) modifies the definitions of what is considered empty and what is not
  * @returns {boolean} Indication if the value is empty

@@ -22,3 +22,8 @@ export { default as mapValues } from './functions/mapValues';
 /* Arrays */
 
 export { default as extract } from './functions/extract';
+
+
+/* Dates */
+
+export { nowInSec } from './functions/nowInSec';

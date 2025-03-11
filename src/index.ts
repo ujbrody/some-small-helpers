@@ -10,7 +10,7 @@ export { default as areEqual } from './functions/areEqual';
 
 export { default as formatDigits } from './functions/formatDigits';
 export { default as splitFirst } from './functions/splitFirst';
-
+export { default as awareSplit } from './functions/awareSplit';
 
 /* Objects */
 

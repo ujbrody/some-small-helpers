@@ -165,13 +165,13 @@ function _areEqual(item1: any, item2: any, passed: any[], options: typeof defaul
    * OBJECT COMPARISON
    */
 
-  if (options.comparisonProps && options.comparisonProps.length > 0) {
-    a = pick(item1, options.comparisonProps);
-    b = pick(item2, options.comparisonProps);
-  }
-
   if (hasEnumerableEntries(a) && hasEnumerableEntries(b)) {
     passed.push(a, b);
+
+    if (options.comparisonProps && options.comparisonProps.length > 0) {
+      a = pick(item1, options.comparisonProps);
+      b = pick(item2, options.comparisonProps);
+    }
 
     const aKeys = [...Object.keys(a), ...Object.getOwnPropertySymbols(a)];
     const bKeys = [...Object.keys(b), ...Object.getOwnPropertySymbols(b)];

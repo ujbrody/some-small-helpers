@@ -258,7 +258,6 @@ describe('areEqual', () => {
     const obj2 = { [symbol2]: 'value' };
     const obj3 = { [symbol1]: 'different' };
 
-    // expect(areEqual(obj1, obj1)).toBe(true);
     expect(areEqual(obj1, obj2)).toBe(false); // Different symbols
     expect(areEqual(obj1, obj3)).toBe(false);
   });
@@ -287,7 +286,7 @@ describe('areEqual', () => {
     const arr1 = ['2000-01-01', new Date('2000-01-02'), 'Foo'];
     const arr2 = [new Date('2000-01-01'), '2000-01-02', 'Foo'];
 
-    // expect(areEqual(arr1, arr2)).toBe(false);
+    expect(areEqual(arr1, arr2)).toBe(false);
     expect(areEqual(arr1, arr2, { stringDate: true })).toBe(true);
   });
 
@@ -297,5 +296,30 @@ describe('areEqual', () => {
 
     expect(areEqual(invalidDate1, invalidDate2)).toBe(false);
     expect(areEqual(invalidDate1, invalidDate2, { invalidDatesAreEqual: true })).toBe(true);
+  });
+
+  it('compares two primitives well when the comparisonProps are set', () => {
+    expect(areEqual('string', 'string', { comparisonProps: ['prop1', 'prop2'] })).toBe(true);
+    expect(areEqual('string1', 'string2', { comparisonProps: ['prop1', 'prop2'] })).toBe(false);
+  });
+
+  it('safe against circular reference when the comparisonProps are set', () => {
+    class Obj {
+      prop1 = 'Hi';
+
+      prop2?: Obj;
+    }
+
+    const obj1 = new Obj();
+    obj1.prop2 = obj1;
+
+    const obj2 = new Obj();
+    obj2.prop2 = obj1;
+
+    const obj3 = new Obj();
+    obj3.prop2 = obj3;
+
+    expect(areEqual(obj1, obj2, { comparisonProps: ['prop1', 'prop2'] })).toBe(true);
+    expect(areEqual(obj1, obj3, { comparisonProps: ['prop1', 'prop2'] })).toBe(true);
   });
 });

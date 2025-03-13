@@ -134,11 +134,12 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, contex
  * @returns {string} - The type of the array.
  * 
  * @example
+ * ```typescript
  * const arr = [1, 'test', () => {}];
  * const type = determineArrayType(arr);
  * 
  * expect(type).toBe('[number, string, function]');
- * 
+ * ```
  * 
  * Options
  * =======
@@ -151,6 +152,7 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, contex
  * When set to `'none'` the function will not show the type of the objects in the array.
  * 
  * @example
+ * ```typescript
  * const arr = [{a: 1, b: { c: 3 }}, {a: 3, b: { c: 4 }}];
  * const type = determineArrayType(arr, { verboseObjects: 'all' });
  * 
@@ -165,7 +167,7 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, contex
  * const type3 = determineArrayType(arr3, { verboseObjects: 'none' });
  * 
  * expect(type3).toBe('object');
- *
+ * ```
  *
  * *Note:* Regardless of the `verboseObjects` option, if the structure of the objects in the array are different, the function will always return `'mixed object'`.
  */

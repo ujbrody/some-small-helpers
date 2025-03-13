@@ -22,7 +22,7 @@ export { default as mapValues } from './functions/mapValues';
 /* Arrays */
 
 export { default as extract } from './functions/extract';
-
+export { default as determineArrayType } from './functions/determineArrayType';
 
 /* Dates */
 

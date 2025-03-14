@@ -15,7 +15,7 @@ module.exports = {
     /* App shortcut paths */
     '^~/(.*)$': '<rootDir>/$1',
     '^~tests-utils/(.*)$': '<rootDir>/__tests__/testUtils/$1',
-    '^~types/(.*)$': '<rootDir>/interfaces/$1',
+    '^~types/(.*)$': '<rootDir>/types/$1',
   },
   testPathIgnorePatterns: ['<rootDir>/node_modules/'],
   transformIgnorePatterns: [

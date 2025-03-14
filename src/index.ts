@@ -27,3 +27,8 @@ export { default as determineArrayType } from './functions/determineArrayType';
 /* Dates */
 
 export { nowInSec } from './functions/nowInSec';
+
+
+/* Custom Types */
+
+export type { default as IAnyClass } from './types/AnyClass';

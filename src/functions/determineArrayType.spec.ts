@@ -129,4 +129,16 @@ describe('determineArrayType', () => {
       expect(determineArrayType([obj, obj], { verboseObjects: 'none' })).toBe('object');
     });
   });
+
+  describe('identifyClasses option', () => {
+    test('should identify classes by their name', () => {
+      class BaseTestClass {}
+
+      class TestClass extends BaseTestClass {}
+
+      expect(determineArrayType([new TestClass(), new TestClass()])).toBe('TestClass');
+      expect(determineArrayType([new TestClass(), new TestClass()], { identifyClasses: [BaseTestClass] })).toBe('BaseTestClass');
+    });
+    
+  });
 }); 

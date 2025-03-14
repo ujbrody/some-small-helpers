@@ -1,5 +1,8 @@
+import type AnyClass from '~types/AnyClass';
+
 interface DetermineArrayTypeOptions {
   verboseObjects?: 'all' | 'none' | 'top-level';
+  identifyClasses?: AnyClass[];
 }
 
 // Track recursion depth for nested objects
@@ -50,6 +53,17 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, contex
       // Return [type] notation
       return `[${innerType}]`;
     }
+
+
+    // Check for instances of classes specified in identifyClasses option
+    if (options?.identifyClasses && options.identifyClasses.length > 0) {
+      for (const classToCheck of options.identifyClasses) {
+        if (value instanceof classToCheck) {
+          return classToCheck.name;
+        }
+      }
+    }
+
     
     // Handle TypedArrays
     const typedArrayTypes = [
@@ -126,6 +140,8 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, contex
  * - `[string]`: The array contains only strings.
  * - etc.
  * 
+ * If the array contains instances of classes, then the type returned is the name of the class.
+ * 
  * If the array contains objects, then the type returned is the type of the first object in the array.
  * The syntax the function uses to describe the object depends on the `verboseObjects` option.
  * 
@@ -170,6 +186,25 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, contex
  * ```
  *
  * *Note:* Regardless of the `verboseObjects` option, if the structure of the objects in the array are different, the function will always return `'mixed object'`.
+ * 
+ * 
+ * `identifyClasses`
+ * ----------------
+ * *Defaults to* `[]`
+ * 
+ * An array of classes that the function will identify and return the name of the class.
+ * This option takes precedence over returning the class name, and therefore allows to target base classes:
+ * 
+ * @example
+ * ```typescript
+ * class BaseClass {}
+ * class SubClass extends BaseClass {}
+ * 
+ * const arr = [new BaseClass(), new SubClass()];
+ * 
+ * expect(determineArrayType(arr)).toBe('SubClass');
+ * expect(determineArrayType(arr, { identifyClasses: [BaseClass] })).toBe('BaseClass');
+ * ```
  */
 export default function determineArrayType(arr: any, options?: DetermineArrayTypeOptions) {
   const verboseObjects = options?.verboseObjects ?? 'top-level';

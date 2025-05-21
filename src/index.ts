@@ -6,11 +6,13 @@ export { isNumber } from './functions/isNumber';
 export { default as safeStringify } from './functions/safeStringify';
 export { default as areEqual } from './functions/areEqual';
 
+
 /* Strings */
 
 export { default as formatDigits } from './functions/formatDigits';
 export { default as splitFirst } from './functions/splitFirst';
 export { default as awareSplit } from './functions/awareSplit';
+
 
 /* Objects */
 
@@ -24,6 +26,12 @@ export { default as mapValues } from './functions/mapValues';
 export { default as extract } from './functions/extract';
 export { default as determineArrayType } from './functions/determineArrayType';
 
+
 /* Dates */
 
 export { nowInSec } from './functions/nowInSec';
+
+
+/* Testing */
+
+export { default as probabilityArray } from './functions/probabilityArray';

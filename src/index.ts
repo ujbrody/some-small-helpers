@@ -35,3 +35,4 @@ export { nowInSec } from './functions/nowInSec';
 /* Testing */
 
 export { default as probabilityArray } from './functions/probabilityArray';
+export { default as probableRandomator } from './functions/probableRandomator';

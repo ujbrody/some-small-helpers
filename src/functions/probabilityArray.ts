@@ -175,6 +175,9 @@ const defaultOptions: ProbabilityArrayOptions = {
  * Takes a list of items of any type and ratios, and returns an array with 100 cells.
  * All items appear in the array according to the specified ratios.
  * The items need to be provided in pairs implemented via arrays.
+ * 
+ * @param {ProbabilityItem<T>[]} args The arguments to place in the array in the desired ratio `[item, amount]`
+ * @returns {T[]} Array of size 100, that has all items - each in the specified quantity
  *
  * @example
  * ```typescript
@@ -188,9 +191,6 @@ const defaultOptions: ProbabilityArrayOptions = {
  * expect(bar).toHaveLength(30);
  * expect(boom).toHaveLength(50);
  * ```
- *
- * @param args The arguments to place in the array in the desired ratio `[item, amount]`
- * @returns Array of size 100, that has all items - each in the specified quantity
  */
 export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
 
@@ -199,6 +199,10 @@ export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
  * All items appear in the array according to the specified ratios.
  * The items need to be provided in pairs implemented via arrays.
  *
+ * @param {ProbabilityItem<T>[]} ratios An array that contains items and their ratios `[item, amount]`
+ * @param {ProbabilityArrayOptions} options Options to modify the behavior of the function
+ * @returns {T[]} Array of size 100, that has all items - each in the specified quantity
+ * 
  * @example
   * ```typescript
  * const arr = probabilityArray([['foo', 0.2], ['bar', 0.3], ['boom', 0.5]], { sortOrder: 'incoming', cutoff: 'last' });
@@ -275,10 +279,6 @@ export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
  * expect(spread.filter((item) => item === 'C')).toHaveLength(30);
  * expect(spread.filter((item) => item === 'D')).toHaveLength(20);
  * ```
- *
- * @param ratios An array that contains items and their ratios `[item, amount]`
- * @param options Options to modify the behavior of the function
- * @returns Array of size 100, that has all items - each in the specified quantity
  */
 export default function probabilityArray<T>(ratios: ProbabilityItem<T>[], options?: ProbabilityArrayOptions): T[];
 

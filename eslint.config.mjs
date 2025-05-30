@@ -32,7 +32,7 @@ export default [
         ignoreTemplateLiterals: true,
         ignoreRegExpLiterals: true
       }],
-      '@stylistic/js/max-statements-per-line': ['error', { max: 2 }],
+      '@stylistic/max-statements-per-line': ['error', { max: 2 }],
       '@stylistic/member-delimiter-style': ['error', {
         multiline: { delimiter: 'semi', requireLast: true },
         singleline: { delimiter: 'semi', requireLast: false }
@@ -80,12 +80,15 @@ export default [
       'unicorn/no-null': 'off',
       'unicorn/prevent-abbreviations': ['error', {
         replacements: {
+          args: false,
           arr: false,
+          fn: false,
           func: false,
           i: false,
           j: false,
           num: false,
           obj: false,
+          prev: false,
           prop: false,
           str: false,
           tmp: false,

@@ -10,8 +10,8 @@ import formatDigits from './formatDigits';
 
 describe('formatDigits', () => {
 
-  const formatPhone = `(###) ###-####`;
-  const formatThousand = `##,###.##`;
+  const formatPhone = '(###) ###-####';
+  const formatThousand = '##,###.##';
 
   it('takes a string of digits and fit them in the format', () => {
     expect(formatDigits('1234567890', formatPhone)).toBe('(123) 456-7890');
@@ -29,7 +29,7 @@ describe('formatDigits', () => {
 
   it('continue with the next characters in format until reaching a missing digit if there are not enough digits and lastDigitEnds is set to `false`', () => {
     expect(formatDigits('1s2', formatThousand, { lastDigitEnds: false })).toBe('12,');
-    expect(formatDigits('1s23se456', `(###) ###---####`, { lastDigitEnds: false })).toBe('(123) 456---');
+    expect(formatDigits('1s23se456', '(###) ###---####', { lastDigitEnds: false })).toBe('(123) 456---');
   });
 
   it('trim blank spaces by default', () => {

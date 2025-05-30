@@ -72,10 +72,10 @@ describe('safeJsonStringify', () => {
 
   it('stringifies functions by outputting their content', () => {
     const arrowFunc = () => 'hello';
-    function func() { return 'hello'; }
+    function func() { return 'hello'; } // eslint-disable-line @stylistic/brace-style
     const obj = {
       anonArrowFunc: () => 'hello',
-      anonFunc: function() { return 'hello'; }
+      anonFunc: function () { return 'hello'; } // eslint-disable-line object-shorthand, @stylistic/brace-style
     };
 
     expect(safeStringify(arrowFunc)).toBe("() => 'hello'");
@@ -149,26 +149,26 @@ describe('safeJsonStringify', () => {
   });
 
   it('handles special characters in strings', () => {
-    expect(safeStringify('Hello\nWorld')).toBe('"Hello\\nWorld"');
-    expect(safeStringify('Tab\tCharacter')).toBe('"Tab\\tCharacter"');
+    expect(safeStringify('Hello\nWorld')).toBe(String.raw`"Hello\nWorld"`);
+    expect(safeStringify('Tab\tCharacter')).toBe(String.raw`"Tab\tCharacter"`);
   });
 
   it('handles Infinity and NaN', () => {
     expect(safeStringify(Infinity)).toBe('null');
-    expect(safeStringify(NaN)).toBe('null');
+    expect(safeStringify(Number.NaN)).toBe('null');
   });
 
   it('handles Boolean objects', () => {
-    expect(safeStringify(new Boolean(true))).toBe('true');
-    expect(safeStringify(new Boolean(false))).toBe('false');
+    expect(safeStringify(Boolean(true))).toBe('true');
+    expect(safeStringify(Boolean(false))).toBe('false');
   });
 
   it('handles Number objects', () => {
-    expect(safeStringify(new Number(1))).toBe('1');
+    expect(safeStringify(Number(1))).toBe('1');
   });
 
   it('handles String objects', () => {
-    expect(safeStringify(new String('text'))).toBe('"text"');
+    expect(safeStringify(String('text'))).toBe('"text"');
   });
 
   it('handles custom objects with circular references', () => {
@@ -201,4 +201,4 @@ describe('safeJsonStringify', () => {
     const obj = { c: 3, a: 1, b: 2 };
     expect(safeStringify(obj, { sortContents: true })).toBe('{"a":1,"b":2,"c":3}');
   });
-}); 
+});

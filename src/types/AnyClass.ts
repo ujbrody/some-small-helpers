@@ -1,3 +1,3 @@
 export default interface IAnyClass {
-  new (input: any): any
+  new (input: any): any;
 }

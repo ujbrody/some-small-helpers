@@ -71,7 +71,7 @@ describe('awareSplit', () => {
   });
 
   // Additional tests
-  
+
   it('handles empty string input', () => {
     expect(awareSplit('', '|')).toEqual(['']);
   });
@@ -81,8 +81,8 @@ describe('awareSplit', () => {
   });
 
   it('handles escaped quotes correctly', () => {
-    const str = 'one|two\\"three|four\\"|five';
-    expect(awareSplit(str, '|')).toEqual(['one', 'two\\"three', 'four\\"', 'five']);
+    const str = String.raw`one|two\"three|four\"|five`;
+    expect(awareSplit(str, '|')).toEqual(['one', String.raw`two\"three`, String.raw`four\"`, 'five']);
   });
 
   it('handles consecutive dividers and empty segments', () => {

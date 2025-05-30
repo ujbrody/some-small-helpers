@@ -49,4 +49,4 @@ describe('splitFirst', () => {
   it('handles strings containing only the divider', () => {
     expect(splitFirst(',', ',')).toEqual(['']);
   });
-}); 
+});

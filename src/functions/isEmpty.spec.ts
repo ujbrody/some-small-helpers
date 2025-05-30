@@ -1,5 +1,3 @@
-import { Types } from 'mongoose';
-
 import isEmpty from './isEmpty';
 
 
@@ -8,6 +6,7 @@ import isEmpty from './isEmpty';
  *
  * @group unit/isEmpty
  */
+
 
 describe('isEmpty', () => {
 
@@ -225,7 +224,7 @@ describe('isEmpty', () => {
   });
 
   it('safe against circular referencing with non-empty array', () => {
-    const arr: any[] = ['blah', 3]; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const arr: any[] = ['blah', 3];
     arr.unshift(arr);
 
     expect(isEmpty(arr)).toBe(false);
@@ -248,7 +247,7 @@ describe('isEmpty', () => {
   });
 
   it('safe against circular referencing with empty arrays', () => {
-    const arr: any[] = [null, undefined, '']; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const arr: any[] = [null, undefined, ''];
     arr.push(arr);
 
     expect(isEmpty(arr)).toBe(true);
@@ -267,7 +266,7 @@ describe('isEmpty', () => {
   });
 
   it('safe against circular referencing when the only cell in array is the reference', () => {
-    const arr: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const arr: any[] = [];
     arr.push(arr);
 
     expect(isEmpty(arr)).toBe(true);

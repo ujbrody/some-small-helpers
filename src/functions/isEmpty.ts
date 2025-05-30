@@ -22,11 +22,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
 
   const { emptyStringIsEmpty, whitespaceIsEmpty, zeroIsEmpty, falseIsEmpty, treatMapsAsObjects, skipClasses } = settings;
 
-  if (skipClasses) {
-    if (skipClasses.some((Cls) => val instanceof Cls)) {
-      return false;
-    }
-  }
+  if (skipClasses && skipClasses.some((Cls) => val instanceof Cls)) return false;
 
   if (typeof val === 'string') {
     const result = whitespaceIsEmpty ? val.trim() : val;

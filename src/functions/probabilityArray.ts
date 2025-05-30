@@ -21,7 +21,7 @@ function consolidateDuplicateItems<T>(inputItems: ProbabilityItem<T>[]): Probabi
   for (const [item, probability] of items) {
     if (seenItems.has(item)) {
       const index = seenItems.get(item)!;
-      const currentProb = result[index][1];
+      const [,currentProb] = result[index];
       const newProb = Math.min(currentProb + probability, 100); // Cap at 100
       result[index] = [item, newProb];
     } else {
@@ -38,13 +38,13 @@ function normalizeToSum100(input: number[]): number[] {
 
   const MIN = 1;
   const total = input.reduce((sum, n) => sum + n, 0);
-  const scaled = input.map(n => (n / total) * 100);
+  const scaled = input.map((n) => (n / total) * 100);
 
   // Apply floor and enforce minimum of 1
-  const result = scaled.map(n => Math.max(Math.floor(n), MIN));
+  const result = scaled.map((n) => Math.max(Math.floor(n), MIN));
 
-  let sum = result.reduce((s, n) => s + n, 0);
-  let deficit = 100 - sum;
+  const sum = result.reduce((s, n) => s + n, 0);
+  const deficit = 100 - sum;
 
   // Distribute remaining units fairly (starting from largest fractional parts)
   if (deficit > 0) {
@@ -56,8 +56,8 @@ function normalizeToSum100(input: number[]): number[] {
     // Sort by largest fractional part
     fractions.sort((a, b) => b.frac - a.frac);
 
-    for (let i = 0; i < deficit; i++) {
-      result[fractions[i % input.length].i]++;
+    for (let i = 0; i < deficit; i += 1) {
+      result[fractions[i % input.length].i] += 1;
     }
   }
 
@@ -75,14 +75,14 @@ function removeEvenly(values: number[]) {
   // Keep reducing until excess is gone
   let i = 0;
   while (excess > 0) {
-    const idx = i % result.length;
+    const index = i % result.length;
 
-    if (result[idx] > 1) {
-      result[idx] -= 1;
+    if (result[index] > 1) {
+      result[index] -= 1;
       excess -= 1;
     }
 
-    i++;
+    i += 1;
   }
 
   return result;
@@ -90,21 +90,21 @@ function removeEvenly(values: number[]) {
 
 function cutoffExcess<T>(allocations: T[][], cutoff: Cutoff = 'last') {
 
-  function findCellThatIsThe<T>() {
+  function findCellThatIsThe() {
 
     switch (cutoff) {
       case 'last':
-        return allocations[allocations.length - 1];
+      { return allocations.at(-1); }
       case 'biggest':
-        return allocations.find((arr) => arr.length === Math.max(...allocations.map((arr) => arr.length)));
+      { return allocations.find((arr) => arr.length === Math.max(...allocations.map((arr) => arr.length))); }
       case 'smallest':
-        return allocations.find((arr) => arr.length === Math.min(...allocations.map((arr) => arr.length)));
+      { return allocations.find((arr) => arr.length === Math.min(...allocations.map((arr) => arr.length))); }
       default:
-        return undefined;
+      { return; }
     }
   }
 
-  let totalProbability = allocations.reduce((acc, curr) => acc + curr.length, 0);
+  let totalProbability = allocations.reduce((accumulator, current) => accumulator + current.length, 0);
 
   if (totalProbability > 100) {
 
@@ -119,9 +119,13 @@ function cutoffExcess<T>(allocations: T[][], cutoff: Cutoff = 'last') {
     }
 
     if (reductionFactors) {
-      allocations.forEach((arr, index) => {
-        arr.length = reductionFactors[index];
-      });
+      for (const [index, arr] of allocations.entries()) {
+        if (arr.length > reductionFactors[index]) {
+          arr.length = reductionFactors[index];
+        } else {
+          arr.push(...Array.from({ length: reductionFactors[index] - arr.length }, () => arr[0]));
+        }
+      }
       return;
     }
   }
@@ -138,24 +142,24 @@ function cutoffExcess<T>(allocations: T[][], cutoff: Cutoff = 'last') {
       allocations.splice(allocations.indexOf(last), 1);
     }
 
-    totalProbability = allocations.reduce((acc, curr) => acc + curr.length, 0);
+    totalProbability = allocations.reduce((accumulator, current) => accumulator + current.length, 0);
   }
-  
-  
 }
 
 function sortProbabilityItems<T>(items: ProbabilityItem<T>[], sortOrder?: SortOrder) {
-  
+
   switch (sortOrder) {
-    case 'asc':
+    case 'asc': {
       items.sort((a, b) => a[1] - b[1]);
       break;
-    case 'desc':
+    }
+    case 'desc': {
       items.sort((a, b) => b[1] - a[1]);
       break;
-    default:
+    }
+    default: {
       return;
-      
+    }
   }
 }
 
@@ -175,7 +179,7 @@ const defaultOptions: ProbabilityArrayOptions = {
  * Takes a list of items of any type and ratios, and returns an array with 100 cells.
  * All items appear in the array according to the specified ratios.
  * The items need to be provided in pairs implemented via arrays.
- * 
+ *
  * @param {ProbabilityItem<T>[]} args The arguments to place in the array in the desired ratio `[item, amount]`
  * @returns {T[]} Array of size 100, that has all items - each in the specified quantity
  *
@@ -202,7 +206,7 @@ export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
  * @param {ProbabilityItem<T>[]} ratios An array that contains items and their ratios `[item, amount]`
  * @param {ProbabilityArrayOptions} options Options to modify the behavior of the function
  * @returns {T[]} Array of size 100, that has all items - each in the specified quantity
- * 
+ *
  * @example
   * ```typescript
  * const arr = probabilityArray([['foo', 0.2], ['bar', 0.3], ['boom', 0.5]], { sortOrder: 'incoming', cutoff: 'last' });
@@ -263,17 +267,17 @@ export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
  *
  * expect(last.filter((item) => item === 'C')).toHaveLength(20);
  * expect(last.filter((item) => item === 'D')).toHaveLength(0);
- * 
+ *
  * expect(biggest.filter((item) => item === 'B')).toHaveLength(10);
- * 
+ *
  * expect(smallest.filter((item) => item === 'A')).toHaveLength(0);
  * expect(smallest.filter((item) => item === 'D')).toHaveLength(10);
- * 
+ *
  * expect(normalize.filter((item) => item === 'A')).toHaveLength(14);
  * expect(normalize.filter((item) => item === 'B')).toHaveLength(36);
  * expect(normalize.filter((item) => item === 'C')).toHaveLength(29);
  * expect(normalize.filter((item) => item === 'D')).toHaveLength(21);
- * 
+ *
  * expect(spread.filter((item) => item === 'A')).toHaveLength(10);
  * expect(spread.filter((item) => item === 'B')).toHaveLength(40);
  * expect(spread.filter((item) => item === 'C')).toHaveLength(30);
@@ -283,10 +287,10 @@ export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
 export default function probabilityArray<T>(ratios: ProbabilityItem<T>[], options?: ProbabilityArrayOptions): T[];
 
 export default function probabilityArray<T>(...args: any[]): T[] {
-  
-  const options: ProbabilityArrayOptions =  args.length < 2 || Array.isArray(args[1]) ? defaultOptions : mapValues(defaultOptions, (value, key) => args[1][key] || value);
 
-  const ratios: ProbabilityItem<T>[] = Array.isArray(args[0]) && typeof args[0][0] !== 'undefined' && typeof args[0][1] === 'number'
+  const options: ProbabilityArrayOptions = args.length < 2 || Array.isArray(args[1]) ? defaultOptions : mapValues(defaultOptions, (value, key) => args[1][key] || value);
+
+  const ratios: ProbabilityItem<T>[] = Array.isArray(args[0]) && args[0][0] !== undefined && typeof args[0][1] === 'number'
     ? consolidateDuplicateItems(args)
     : consolidateDuplicateItems(args[0]);
 
@@ -300,22 +304,18 @@ export default function probabilityArray<T>(...args: any[]): T[] {
 
   const allocations: T[][] = [];
 
-  let totalSum = 0;
   for (const ratio of ratios) {
-    const item = ratio[0];
-    let amount = ratio[1];
-
-    totalSum += amount;
+    const [item, amount] = ratio;
 
     allocations.push(Array.from({ length: amount }, () => item));
   }
 
   cutoffExcess(allocations, options.cutoff);
-  
+
   let result: T[];
 
   switch (options.sortOrder) {
-    case 'circular':
+    case 'circular': {
       result = [];
       let circulator = 0;
 
@@ -333,11 +333,14 @@ export default function probabilityArray<T>(...args: any[]): T[] {
         }
       }
       break;
-    case 'random':
-      result = shuffle(allocations.reduce((acc, curr) => acc.concat(curr), [] as T[]));
+    }
+    case 'random': {
+      result = shuffle(allocations.flat());
       break;
-    default:
-      result = allocations.reduce((acc, curr) => acc.concat(curr), [] as T[]);
+    }
+    default: {
+      result = allocations.flat();
+    }
   }
 
   return result;

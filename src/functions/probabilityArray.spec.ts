@@ -5,6 +5,7 @@ import probabilityArray, { ProbabilityItem } from './probabilityArray';
  * cleanEmpty TESTS
  *
  * @group unit/cleanEmpty
+ * @group only
  */
 
 
@@ -37,7 +38,7 @@ describe('probabilityArray', () => {
   });
 
   it('rounds decimals to two digits after the dot', () => {
-    const arr = probabilityArray(['foo', 0.334], ['bar', 0.5572], ['blah', 0.12901]);
+    const arr = probabilityArray(['foo', 0.334], ['bar', 0.5572], ['blah', 0.129_01]);
     expect(arr).toHaveLength(100);
 
     const foo = arr.filter((item) => item === 'foo');
@@ -92,7 +93,7 @@ describe('probabilityArray', () => {
     expect(bar).toHaveLength(40);
     expect(blah).toHaveLength(30); // This one was also shortened
     expect(boom).toHaveLength(0);
-  })
+  });
 
   it('returns shorter array if total sum does not come up to 100', () => {
     const arr = probabilityArray(['foo', 0.3], ['bar', 0.4], ['blah', 0.2]);
@@ -134,13 +135,13 @@ describe('probabilityArray', () => {
     const bar2 = arr2.slice(30, 90);
     const blah2 = arr2.slice(90);
 
-    expect(foo1).toEqual(Array(30).fill('foo'));
-    expect(bar1).toEqual(Array(60).fill('bar'));
-    expect(blah1).toEqual(Array(10).fill('blah'));
+    expect(foo1).toEqual(Array.from({ length: 30 }, () => 'foo'));
+    expect(bar1).toEqual(Array.from({ length: 60 }, () => 'bar'));
+    expect(blah1).toEqual(Array.from({ length: 10 }, () => 'blah'));
 
-    expect(foo2).toEqual(Array(30).fill('foo'));
-    expect(bar2).toEqual(Array(60).fill('bar'));
-    expect(blah2).toEqual(Array(10).fill('blah'));
+    expect(foo2).toEqual(Array.from({ length: 30 }, () => 'foo'));
+    expect(bar2).toEqual(Array.from({ length: 60 }, () => 'bar'));
+    expect(blah2).toEqual(Array.from({ length: 10 }, () => 'blah'));
 
     expect(arr1).toEqual(arr2);
   });
@@ -153,9 +154,9 @@ describe('probabilityArray', () => {
     const foo = arr.slice(10, 40);
     const bar = arr.slice(40);
 
-    expect(blah).toEqual(Array(10).fill('blah'));
-    expect(foo).toEqual(Array(30).fill('foo'));
-    expect(bar).toEqual(Array(60).fill('bar'));
+    expect(blah).toEqual(Array.from({ length: 10 }, () => 'blah'));
+    expect(foo).toEqual(Array.from({ length: 30 }, () => 'foo'));
+    expect(bar).toEqual(Array.from({ length: 60 }, () => 'bar'));
   });
 
   it('generates array in order from the most common item to the least common when option is set to "desc"', () => {
@@ -166,9 +167,9 @@ describe('probabilityArray', () => {
     const foo = arr.slice(60, 90);
     const blah = arr.slice(90);
 
-    expect(bar).toEqual(Array(60).fill('bar'));
-    expect(foo).toEqual(Array(30).fill('foo'));
-    expect(blah).toEqual(Array(10).fill('blah'));
+    expect(bar).toEqual(Array.from({ length: 60 }, () => 'bar'));
+    expect(foo).toEqual(Array.from({ length: 30 }, () => 'foo'));
+    expect(blah).toEqual(Array.from({ length: 10 }, () => 'blah'));
   });
 
   it('generates a array with a circular repetition of items when option is set to "circular"', () => {
@@ -180,7 +181,6 @@ describe('probabilityArray', () => {
     for (let i = 0; i < 30; i += 1) {
       // For the first 30 items, the items should be in the order of 'foo', 'bar', 'blah'
       const item = arr[i];
-      const index = options.indexOf(item);
       const indexInOptions = i % options.length;
 
       expect(item).toEqual(options[indexInOptions]);
@@ -191,14 +191,13 @@ describe('probabilityArray', () => {
     for (let i = 30; i < 70; i += 1) {
       // For the next 40 items, the items should be in the order of 'foo', 'bar'
       const item = arr[i];
-      const index = options.indexOf(item);
       const indexInOptions = i % options.length;
 
       expect(item).toEqual(options[indexInOptions]);
     }
 
     // All that remains in the end is just 'bar'
-    expect(arr.slice(70)).toEqual(Array(30).fill('bar'));
+    expect(arr.slice(70)).toEqual(Array.from({ length: 30 }, () => 'bar'));
   });
 
   it('generates an array with random distribution of the items when option is set to "random"', () => {
@@ -232,7 +231,7 @@ describe('probabilityArray', () => {
     expect(foo3).toHaveLength(30);
     expect(bar3).toHaveLength(60);
     expect(blah3).toHaveLength(10);
-    
+
     expect(arr1).not.toEqual(arr2);
     expect(arr1).not.toEqual(arr3);
     expect(arr2).not.toEqual(arr3);
@@ -254,12 +253,12 @@ describe('probabilityArray', () => {
     const blah = arr.filter((item) => item === 'blah');
 
     expect(blah).toHaveLength(10);
-  })
+  });
 
   it('normalizes the sizes of the arrays if option in case they all exceed 100 is set to "normalize"', () => {
     const arr = probabilityArray([['foo', 0.3], ['bar', 0.6], ['blah', 0.3]], { cutoff: 'normalize' });
     expect(arr).toHaveLength(100);
-    
+
     const foo = arr.filter((item) => item === 'foo');
     const bar = arr.filter((item) => item === 'bar');
     const blah = arr.filter((item) => item === 'blah');
@@ -267,9 +266,9 @@ describe('probabilityArray', () => {
     expect(foo).toHaveLength(25);
     expect(bar).toHaveLength(50);
     expect(blah).toHaveLength(25);
-  })
+  });
 
-  it('retains at least cell in parts that are so small that under normalization will be eliminated', () => {
+  it('retains at least one cell in parts that are so small that under normalization will be eliminated', () => {
     const arr = probabilityArray([['foo', 0.49], ['bar', 0.6], ['blah', 0.01]], { cutoff: 'normalize' });
     expect(arr).toHaveLength(100);
 
@@ -279,13 +278,13 @@ describe('probabilityArray', () => {
 
     expect(foo).toHaveLength(44);
     expect(bar).toHaveLength(54);
-    expect(blah).toHaveLength(1);
+    expect(blah).toHaveLength(2);
   });
 
   it('reduce the array parts as evenly as possible (numerically) when exceeding 100 and option is set to "spread"', () => {
     const arr = probabilityArray([['foo', 0.3], ['bar', 0.6], ['blah', 0.2], ['boom', 0.3]], { cutoff: 'spread' });
     expect(arr).toHaveLength(100);
-    
+
     const foo = arr.filter((item) => item === 'foo');
     const bar = arr.filter((item) => item === 'bar');
     const blah = arr.filter((item) => item === 'blah');
@@ -300,7 +299,7 @@ describe('probabilityArray', () => {
   it('retains at least one cell in parts that are so small that under spread will be eliminated', () => {
     const arr = probabilityArray([['foo', 0.5], ['bar', 0.6], ['blah', 0.01]], { cutoff: 'spread' });
     expect(arr).toHaveLength(100);
-    
+
     const foo = arr.filter((item) => item === 'foo');
     const bar = arr.filter((item) => item === 'bar');
     const blah = arr.filter((item) => item === 'blah');
@@ -316,12 +315,12 @@ describe('probabilityArray', () => {
     expect(arr).toHaveLength(100);
 
     expect(input).toEqual([['foo', 0.3], ['bar', 0.6], ['blah', 0.6]]);
-  })
+  });
 
   it('treats negative numbers as 0', () => {
     const arr = probabilityArray([['foo', 0.3], ['bar', -0.6], ['blah', 0.1]]);
     expect(arr).toHaveLength(40);
-    
+
     const foo = arr.filter((item) => item === 'foo');
     const bar = arr.filter((item) => item === 'bar');
     const blah = arr.filter((item) => item === 'blah');
@@ -334,7 +333,7 @@ describe('probabilityArray', () => {
   it('consolidates with negative numbers', () => {
     const arr = probabilityArray([['foo', 0.3], ['bar', -0.2], ['blah', 0.1], ['bar', 0.8]]);
     expect(arr).toHaveLength(100);
-    
+
     const foo = arr.filter((item) => item === 'foo');
     const bar = arr.filter((item) => item === 'bar');
     const blah = arr.filter((item) => item === 'blah');
@@ -345,13 +344,12 @@ describe('probabilityArray', () => {
   });
 
   it('removes values with accumulative ratio smaller than 0 when reducing the size of the array', () => {
-    const arr = probabilityArray([['foo', 0.7], ['bar', 0.-6], ['blah', 0.4], ['bar', 0.3]]);
+    const arr = probabilityArray([['foo', 0.7], ['bar', -0.6], ['blah', 0.4], ['bar', 0.3]]);
     expect(arr).toHaveLength(100);
-    
+
     const foo = arr.filter((item) => item === 'foo');
     const bar = arr.filter((item) => item === 'bar');
     const blah = arr.filter((item) => item === 'blah');
-    const boom = arr.filter((item) => item === 'boom');
 
     expect(foo).toHaveLength(70);
     expect(bar).toHaveLength(0);

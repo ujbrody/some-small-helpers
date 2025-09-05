@@ -5,7 +5,6 @@ import probabilityArray, { ProbabilityItem } from './probabilityArray';
  * cleanEmpty TESTS
  *
  * @group unit/cleanEmpty
- * @group only
  */
 
 

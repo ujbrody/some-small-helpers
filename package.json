@@ -10,8 +10,12 @@
     "lint": "eslint ./src/**/*.ts",
     "test": "jest",
     "test:only": "jest --group=only",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "tsd": "npm run build && tsd"
   },
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ujbrody/some-small-helpers.git"
@@ -43,6 +47,7 @@
     "mongoose": "^8.15.1",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
+    "tsd": "^0.33.0",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.3.0"
   },

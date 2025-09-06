@@ -1,0 +1,4 @@
+{
+  "directory": "test-d",
+  "tsconfig": "tsconfig.build.json"
+}

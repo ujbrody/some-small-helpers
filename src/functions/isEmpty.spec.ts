@@ -224,7 +224,7 @@ describe('isEmpty', () => {
   });
 
   it('safe against circular referencing with non-empty array', () => {
-    const arr: any[] = ['blah', 3];
+    const arr: unknown[] = ['blah', 3];
     arr.unshift(arr);
 
     expect(isEmpty(arr)).toBe(false);
@@ -247,7 +247,7 @@ describe('isEmpty', () => {
   });
 
   it('safe against circular referencing with empty arrays', () => {
-    const arr: any[] = [null, undefined, ''];
+    const arr: unknown[] = [null, undefined, ''];
     arr.push(arr);
 
     expect(isEmpty(arr)).toBe(true);
@@ -266,7 +266,7 @@ describe('isEmpty', () => {
   });
 
   it('safe against circular referencing when the only cell in array is the reference', () => {
-    const arr: any[] = [];
+    const arr: unknown[] = [];
     arr.push(arr);
 
     expect(isEmpty(arr)).toBe(true);

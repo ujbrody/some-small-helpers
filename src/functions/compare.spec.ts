@@ -138,15 +138,15 @@ describe('compare', () => {
     });
 
     it('mixedKind="numeric" coerces values to numbers with NaN handling', () => {
-      expect(compare('5' as any, 3 as any, { mixedKind: 'numeric' })).toBe(1);
-      expect(compare('3' as any, 5 as any, { mixedKind: 'numeric' })).toBe(-1);
-      expect(compare('not-a-number' as any, 7 as any, { mixedKind: 'numeric' })).toBe(1); // NaN > number
-      expect(compare('not-a-number' as any, new Date('invalid-date') as any, { mixedKind: 'numeric' })).toBe(0);
+      expect(compare('5' as unknown as number, 3, { mixedKind: 'numeric' })).toBe(1);
+      expect(compare('3' as unknown as number, 5, { mixedKind: 'numeric' })).toBe(-1);
+      expect(compare('not-a-number' as unknown as number, 7, { mixedKind: 'numeric' })).toBe(1); // NaN > number
+      expect(compare('not-a-number' as unknown as Date, new Date('invalid-date'), { mixedKind: 'numeric' })).toBe(0);
     });
 
     it('mixedKind="string" compares String(a) vs String(b) using collator', () => {
-      expect(compare(5 as any, true as any, { mixedKind: 'string' })).toBe(-1); // '5' < 'true' lexicographically
-      expect(compare(5 as any, '10' as any, { mixedKind: 'string', collator: { numeric: true } })).toBe(-1); // numeric collation
+      expect(compare(5, true as unknown as number, { mixedKind: 'string' })).toBe(-1); // '5' < 'true' lexicographically
+      expect(compare(5, '10' as unknown as number, { mixedKind: 'string', collator: { numeric: true } })).toBe(-1); // numeric collation
     });
   });
 
@@ -173,8 +173,8 @@ describe('compare', () => {
         }
       }
 
-      expect(compare(new Obj(1) as any, new Obj(3) as any)).toBe(-1);
-      expect(compare({ n: 1 } as any, { n: 3 } as any)).toBe(0); // Object literals `toString` returns `[object Object]`
+      expect(compare(new Obj(1) as unknown as string, new Obj(3) as unknown as string)).toBe(-1);
+      expect(compare({ n: 1 } as unknown as string, { n: 3 } as unknown as string)).toBe(0); // Object literals `toString` returns `[object Object]`
     });
 
     it('make non-primitives string comparisons in the absence of a comparisonFunc while ignoring the provided collator—for string input only', () => {
@@ -190,14 +190,14 @@ describe('compare', () => {
         }
       }
 
-      expect(compare(new Obj(2) as any, new Obj(10) as any, { mixedKind: 'string', collator: { numeric: true } })).toBe(1); // '2' < '10' lexicographically. The collator is ignored in this case.
+      expect(compare(new Obj(2) as unknown as string, new Obj(10) as unknown as string, { mixedKind: 'string', collator: { numeric: true } })).toBe(1); // '2' < '10' lexicographically. The collator is ignored in this case.
     });
 
     it('returns priority to primitive when mixed with non-primitive without a comparisonFunc', () => {
       type Obj = { n: number };
       const a: Obj = { n: 1 };
       const b: Obj = { n: 1 };
-      expect(compare(a as any, b as any)).toBe(0);
+      expect(compare(a as unknown as string, b as unknown as string)).toBe(0);
     });
   });
 });

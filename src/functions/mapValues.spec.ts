@@ -12,8 +12,8 @@ function stringMapper(val: string) {
   return `${val}!`;
 }
 
-function predicate(val: any) {
-  return typeof val === typeof 'string';
+function predicate(val: unknown) {
+  return typeof val === 'string';
 }
 
 
@@ -206,7 +206,7 @@ describe('mapObject', () => {
   });
 
   it('safe from circular referencing', () => {
-    const obj: any = {
+    const obj: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
       one: 'one',
       two: 2,
       three: { prop: 'three' }

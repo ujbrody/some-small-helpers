@@ -6,7 +6,7 @@ interface DetermineArrayTypeOptions {
 }
 
 
-function getDetailedType(value: any, options?: DetermineArrayTypeOptions, depth = 0): string {
+function getDetailedType(value: unknown, options?: DetermineArrayTypeOptions, depth = 0): string {
   const verboseObjects = options?.verboseObjects ?? 'top-level';
   // Handle null separately since typeof null returns 'object'
   if (value === null) {
@@ -91,7 +91,7 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, depth 
       const newDepth = depth + 1;
 
       // Get object properties and their types
-      const keys = Object.keys(value);
+      const keys = Object.keys(value) as (keyof typeof value)[];
       if (keys.length === 0) {
         return '{}'; // Empty object
       }
@@ -197,7 +197,7 @@ function getDetailedType(value: any, options?: DetermineArrayTypeOptions, depth 
  * expect(determineArrayType(arr, { identifyClasses: [BaseClass] })).toBe('BaseClass');
  * ```
  */
-export default function determineArrayType(arr: any, options?: DetermineArrayTypeOptions) {
+export default function determineArrayType(arr: unknown, options?: DetermineArrayTypeOptions) {
 
   if (!Array.isArray(arr)) {
     return 'not an array';

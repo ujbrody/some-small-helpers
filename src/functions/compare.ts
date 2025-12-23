@@ -50,7 +50,7 @@ const defaultCollator = new Intl.Collator(undefined, {
   caseFirst: 'false'
 });
 
-function resolveCollator(option?: CompareOptionsBase<any>['collator']): Intl.Collator {
+function resolveCollator(option?: CompareOptionsBase<unknown>['collator']): Intl.Collator {
   if (!option) return defaultCollator;
 
   if (option instanceof Intl.Collator) return option;
@@ -269,8 +269,8 @@ export function compare<T>(a: T, b: T, options?: CompareOptionsBase<T>): Compari
     if (mixedKind === 'numeric') {
       // Attempted numeric subtraction
       // NaN guarded to keep sort stable
-      const n1 = Number(a as any);
-      const n2 = Number(b as any);
+      const n1 = Number(a as Supported);
+      const n2 = Number(b as Supported);
 
       if (Number.isNaN(n1) && Number.isNaN(n2)) return 0;
       if (Number.isNaN(n1)) return 1 * factor as ComparisonResult;
@@ -280,8 +280,8 @@ export function compare<T>(a: T, b: T, options?: CompareOptionsBase<T>): Compari
     }
 
     if (mixedKind === 'string') {
-      const s1 = String(a as any);
-      const s2 = String(b as any);
+      const s1 = String(a as Supported);
+      const s2 = String(b as Supported);
 
       return resolveCollator(options?.collator).compare(s1, s2) * factor as ComparisonResult;
     }
@@ -342,8 +342,8 @@ export function compare<T>(a: T, b: T, options?: CompareOptionsBase<T>): Compari
     }
 
     case 'string': {
-      const s1 = String(a as any);
-      const s2 = String(b as any);
+      const s1 = String(a as Supported);
+      const s2 = String(b as Supported);
 
       return resolveCollator(options?.collator).compare(s1, s2) * factor as ComparisonResult;
     }

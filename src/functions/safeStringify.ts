@@ -6,6 +6,10 @@ export interface SafeJsonStringifyOptions {
   sortContents?: boolean;
 }
 
+interface IterableLike {
+  [Symbol.iterator]: () => Iterator<unknown>;
+}
+
 const defaultSafeJsonStringifyOptions = {
   removeUndefined: false,
   sortContents: false
@@ -14,7 +18,15 @@ const defaultSafeJsonStringifyOptions = {
 const CIRCULAR_REFERENCE = '<<CIRCULAR>>';
 
 
-function _stringifyValue(val: any, passed: any[], options: NonNullable<SafeJsonStringifyOptions>): string {
+function hasIterator(value: unknown): value is IterableLike {
+  if (value === null || value === undefined) return false;
+  if (typeof value !== 'object' && typeof value !== 'function') return false;
+
+  return typeof (value as IterableLike)[Symbol.iterator] === 'function';
+}
+
+
+function _stringifyValue(val: unknown, passed: unknown[], options: NonNullable<SafeJsonStringifyOptions>): string {
 
   if (passed.includes(val)) return CIRCULAR_REFERENCE;
 
@@ -52,19 +64,25 @@ function _stringifyValue(val: any, passed: any[], options: NonNullable<SafeJsonS
   if (ArrayBuffer.isView(val)) {
     passed.push(val);
     if (val instanceof BigInt64Array || val instanceof BigUint64Array) {
-      const bigIntArray = [];
+      const bigIntArray: number[] = [];
       for (const v of val) {
         bigIntArray.push(+v.toString());
       }
       return `${val.constructor.name}(${JSON.stringify(bigIntArray)})`;
     }
-    return `${val.constructor.name}(${JSON.stringify([...val as any])})`;
+
+    // Other ArrayBuffer views (TypedArrays are iterable; DataView is not)
+    if (hasIterator(val)) {
+      return `${val.constructor.name}(${JSON.stringify([...val])})`;
+    }
+
+    return JSON.stringify(val);
   }
 
   /**
    * Custom iterables
    */
-  if (typeof val?.[Symbol.iterator] === 'function' && !Array.isArray(val) && typeof val !== 'string') {
+  if (hasIterator(val) && !Array.isArray(val) && typeof val !== 'string') {
     return JSON.stringify([...val]);
   }
 
@@ -164,7 +182,7 @@ function _stringifyValue(val: any, passed: any[], options: NonNullable<SafeJsonS
  * expect(safeStringify(arr, { sortContents: true })).toBe('[1,2,3]');
  * ```
  */
-export default function safeStringify(val: any, options?: SafeJsonStringifyOptions): string {
+export default function safeStringify(val: unknown, options?: SafeJsonStringifyOptions): string {
 
   if (val === undefined) return 'undefined';
 

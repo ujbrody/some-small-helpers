@@ -1,15 +1,25 @@
 import flattenDeep from 'lodash/flattenDeep';
 
 
-function isIterable(value: any) {
-  return value !== null && typeof value[Symbol.iterator] === 'function';
+function isIterable(value: unknown): value is Iterable<unknown> {
+  if (value === null) return false;
+
+  // Strings are iterable, but we're already handling them specially in flattenValues anyway.
+  // Keeping this exclusion only makes intent clear and avoids weird cases.
+  if (typeof value === 'string') return false;
+
+  if (typeof value !== 'object' && typeof value !== 'function') return false;
+
+  const maybeIterable = value as { [Symbol.iterator]?: unknown };
+
+  return typeof maybeIterable[Symbol.iterator] === 'function';
 }
 
-function isEnumerable(value: any) {
+function isEnumerable(value: unknown) {
   return value !== null && typeof value === 'object';
 }
 
-function getArrayOfValuesFromAnyEnumerableOrIterable(obj: any): unknown[] | undefined {
+function getArrayOfValuesFromAnyEnumerableOrIterable(obj: unknown): unknown[] | undefined {
 
   if (obj instanceof Map) {
     return Object.values(Object.fromEntries(obj));
@@ -65,9 +75,9 @@ const defaultOptions: FlattenValuesOptions = {
  * expect(flattenValues({ prop1: 'one', prop2: 2, prop1again: 'one}, { returnUnique: true }).sort()).toEqual(['one', 2].sort());
  * ```
  */
-export function flattenValues<T = unknown>(obj: any, options?: FlattenValuesOptions): T[] {
+export function flattenValues(obj: unknown, options?: FlattenValuesOptions): unknown[] {
 
-  if (typeof obj === typeof 'string') return [obj]; // This is necessary because in this case, JS will treat a string as an array of chars
+  if (typeof obj === 'string') return [obj]; // This is necessary because in this case, JS will treat a string as an array of chars
 
   const { returnUnique } = {
     returnUnique: options?.returnUnique || defaultOptions.returnUnique
@@ -80,10 +90,10 @@ export function flattenValues<T = unknown>(obj: any, options?: FlattenValuesOpti
   const values = flattenDeep(arr.map((value) => flattenValues(value, options)));
 
   if (returnUnique) {
-    return [...new Set(values as unknown as T[])];
+    return [...new Set(values)];
   }
 
-  return values as unknown as T[];
+  return values;
 }
 
 

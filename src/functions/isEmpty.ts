@@ -1,10 +1,11 @@
+export type ClassConstructor<TInstance = object> = abstract new (...args: unknown[]) => TInstance;
 export interface IsEmptyOptions {
   emptyStringIsEmpty?: boolean;
   whitespaceIsEmpty?: boolean;
   zeroIsEmpty?: boolean;
   falseIsEmpty?: boolean;
   treatMapsAsObjects?: boolean;
-  skipClasses?: any[];
+  skipClasses?: ReadonlyArray<ClassConstructor>;
 }
 
 const defaultIsEmptyOptions: IsEmptyOptions = {
@@ -18,7 +19,7 @@ const defaultIsEmptyOptions: IsEmptyOptions = {
 
 // The recursive mechanism of the function includes a `passed` array that stored all reference types
 // This is to prevent infinite loop in case that arguments include within them circular references
-function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
+function _isEmpty(val: unknown, passed: unknown[], settings: IsEmptyOptions): boolean {
 
   const { emptyStringIsEmpty, whitespaceIsEmpty, zeroIsEmpty, falseIsEmpty, treatMapsAsObjects, skipClasses } = settings;
 
@@ -127,7 +128,7 @@ function _isEmpty(val: any, passed: any[], settings: IsEmptyOptions): boolean {
  * expect(isEmpty(fullyEmptyMap, { treatMapsAsObjects: false })).toBe(true);
  * ```
  */
-export default function isEmpty(val: any, options?: IsEmptyOptions) {
+export default function isEmpty(val: unknown, options?: IsEmptyOptions) {
 
   const settings = {
     ...defaultIsEmptyOptions,

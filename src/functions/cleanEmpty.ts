@@ -7,8 +7,16 @@ import isEmpty, { type IsEmptyOptions } from './isEmpty';
 
 export interface CleanEmptyOptions {
   completelyRemove?: boolean;
-  replaceWith?: any;
+  replaceWith?: unknown;
   defineEmpty?: IsEmptyOptions;
+}
+
+function isKeyedEntity(value: unknown): value is Record<string, unknown> {
+  return (
+    value !== null
+    && (typeof value === 'object' || typeof value === 'function')
+    && !Array.isArray(value)
+  );
 }
 
 /**
@@ -63,7 +71,7 @@ export interface CleanEmptyOptions {
  * expect(cleanEmpty(obj, { defineEmpty: { emptyStringIsEmpty: false, falseIsEmpty: true }})).toEqual({});
  * ```
  */
-export default function cleanEmpty(obj: any, options?: CleanEmptyOptions): any {
+export default function cleanEmpty(obj: unknown, options?: CleanEmptyOptions): unknown {
 
   const completelyRemove = options?.completelyRemove ?? true;
   const replaceWith = options && has(options, 'replaceWith') ? options.replaceWith : null;
@@ -81,7 +89,7 @@ export default function cleanEmpty(obj: any, options?: CleanEmptyOptions): any {
     return returnValue;
   }
 
-  if (typeof obj !== typeof 'string' && Object.keys(obj || {}).length > 0) {
+  if (isKeyedEntity(obj) && Object.keys(obj || {}).length > 0) {
     const returnValue = completelyRemove
       ? omitBy(
         mapValues(obj, (prop) => cleanEmpty(prop, { defineEmpty })),

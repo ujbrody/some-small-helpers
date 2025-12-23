@@ -1,4 +1,7 @@
-/* eslint-disable unicorn/no-useless-undefined, unicorn/consistent-function-scoping */
+/* eslint-disable unicorn/no-useless-undefined,
+                  unicorn/consistent-function-scoping,
+                  @typescript-eslint/no-explicit-any
+*/
 
 import areEqual from './areEqual';
 
@@ -106,7 +109,7 @@ describe('areEqual', () => {
   });
 
   it('Uses provided checkCases to compare items', () => {
-    const checkCase = (item1: any, item2: any) => item1?.toString() === item2?.toString();
+    const checkCase = (item1: unknown, item2: unknown) => item1?.toString() === item2?.toString();
 
     class Obj {
       constructor(public prop1: string, public prop2: string) {}
@@ -122,8 +125,6 @@ describe('areEqual', () => {
   });
 
   it('returns true if any of the checkCases returns true', () => {
-    const checkCase1 = (item1: any, item2: any) => item1?.prop1 === item2?.prop1;
-    const checkCase2 = (item1: any, item2: any) => item1?.toString() === item2?.toString();
 
     class Obj {
       constructor(public prop1: string, public prop2: string) {}
@@ -132,6 +133,9 @@ describe('areEqual', () => {
         return `${this.prop1} ${this.prop2}`;
       }
     }
+
+    const checkCase1 = (item1: any, item2: any) => item1.prop1 === item2.prop1;
+    const checkCase2 = (item1: any, item2: any) => item1.toString() === item2.toString();
 
     const obj1 = new Obj('Hi', 'there!');
 

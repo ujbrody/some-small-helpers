@@ -6,7 +6,7 @@ import mapValues from 'lodash/mapValues';
 import safeStringify from './safeStringify';
 
 
-type Predicate = (item1: any, item2: any) => boolean | undefined;
+type Predicate = (item1: unknown, item2: unknown) => boolean | undefined;
 
 export interface AreEqualOptions {
   comparisonProps?: string[];
@@ -24,9 +24,9 @@ const defaultAreEqualOptions: NonNullable<Omit<AreEqualOptions, 'checkCases'> & 
 };
 
 
-function hasEnumerableEntries(obj: any): boolean {
+function hasEnumerableEntries(obj: unknown): boolean {
 
-  if (obj === null || typeof obj !== typeof {}) return false;
+  if (obj === null || typeof obj !== 'object') return false;
 
   try {
     Object.entries(obj);
@@ -36,17 +36,15 @@ function hasEnumerableEntries(obj: any): boolean {
   }
 }
 
-function areDates(item1: any, item2: any): boolean {
-  if (item1 instanceof Date && item2 instanceof Date) {
+function isDate(item: unknown): item is Date | string | number {
+  if (item instanceof Date) {
     return true;
   }
 
   // Check if strings can be converted to valid dates
-  if (typeof item1 === 'string' || typeof item2 === 'string') {
-    const date1 = new Date(item1);
-    const date2 = new Date(item2);
-
-    return !Number.isNaN(date1.getTime()) && !Number.isNaN(date2.getTime());
+  if (typeof item === 'string' || typeof item === 'number') {
+    const date = new Date(item);
+    return !Number.isNaN(date.getTime());
   }
 
   return false;
@@ -62,7 +60,7 @@ function compareDatesWhenValidOrInvalid(date1: Date, date2: Date, invalidDatesAr
 }
 
 
-function getWithAllArraysSorted(value: any): any {
+function getWithAllArraysSorted(value: unknown): unknown {
   // Handle null/undefined
   if (value === null) return value;
 
@@ -99,7 +97,7 @@ function getWithAllArraysSorted(value: any): any {
 
 
 function buildCustomizer(cases: Predicate[]): Predicate {
-  function customizer(val1: any, val2: any): boolean | undefined {
+  function customizer(val1: unknown, val2: unknown): boolean | undefined {
 
     let result: boolean | undefined;
 
@@ -118,7 +116,7 @@ function buildCustomizer(cases: Predicate[]): Predicate {
 }
 
 
-function _areEqual(item1: any, item2: any, passed: any[], options: typeof defaultAreEqualOptions): boolean {
+function _areEqual(item1: unknown, item2: unknown, passed: unknown[], options: typeof defaultAreEqualOptions): boolean {
 
   const firstCheck = options.customizer && options.customizer(item1, item2);
 
@@ -128,18 +126,18 @@ function _areEqual(item1: any, item2: any, passed: any[], options: typeof defaul
     return isEqual(item1, item2);
   }
 
-  let a = item1;
-  let b = item2;
+  const a = item1;
+  const b = item2;
 
   /**
    * DATE COMPARISON
    */
   if (options.stringDate) {
-    if (areDates(a, b)) {
-      a = new Date(a);
-      b = new Date(b);
+    if (isDate(a) && isDate(b)) {
+      const aDate = new Date(a);
+      const bDate = new Date(b);
 
-      return compareDatesWhenValidOrInvalid(a, b, options.invalidDatesAreEqual || false);
+      return compareDatesWhenValidOrInvalid(aDate, bDate, options.invalidDatesAreEqual || false);
     }
   } else if (a instanceof Date && b instanceof Date) {
     return compareDatesWhenValidOrInvalid(a, b, options.invalidDatesAreEqual || false);
@@ -149,16 +147,19 @@ function _areEqual(item1: any, item2: any, passed: any[], options: typeof defaul
    * ARRAY COMPARISON
    */
   if (Array.isArray(a) && Array.isArray(b)) {
-    passed.push(a, b);
+    let aArr = a as unknown[];
+    let bArr = b as unknown[];
 
-    if (a.length !== b.length) return false;
+    passed.push(aArr, bArr);
+
+    if (aArr.length !== bArr.length) return false;
 
     if (options.ignoreArrayOrder) {
-      a = getWithAllArraysSorted(a) as any[];
-      b = getWithAllArraysSorted(b) as any[];
+      aArr = getWithAllArraysSorted(aArr) as unknown[];
+      bArr = getWithAllArraysSorted(bArr) as unknown[];
     }
 
-    return a.every((item: any, index: number) => _areEqual(item, b[index], passed, options));
+    return aArr.every((item: unknown, index: number) => _areEqual(item, bArr[index], passed, options));
   }
 
   /**
@@ -166,19 +167,22 @@ function _areEqual(item1: any, item2: any, passed: any[], options: typeof defaul
    */
 
   if (hasEnumerableEntries(a) && hasEnumerableEntries(b)) {
-    passed.push(a, b);
+    let aObj = a as Record<string, unknown>;
+    let bObj = b as Record<string, unknown>;
+
+    passed.push(aObj, bObj);
 
     if (options.comparisonProps && options.comparisonProps.length > 0) {
-      a = pick(item1, options.comparisonProps);
-      b = pick(item2, options.comparisonProps);
+      aObj = pick(aObj, options.comparisonProps);
+      bObj = pick(bObj, options.comparisonProps);
     }
 
-    const aKeys = [...Object.keys(a), ...Object.getOwnPropertySymbols(a)];
-    const bKeys = [...Object.keys(b), ...Object.getOwnPropertySymbols(b)];
+    const aKeys = [...Object.keys(aObj), ...Object.getOwnPropertySymbols(aObj)];
+    const bKeys = [...Object.keys(bObj), ...Object.getOwnPropertySymbols(bObj)];
 
     if (aKeys.length !== bKeys.length) return false;
 
-    return aKeys.every((key) => bKeys.includes(key) && _areEqual(a[key], b[key], passed, options));
+    return aKeys.every((key) => bKeys.includes(key) && _areEqual(aObj[key as string], bObj[key as string], passed, options));
   }
 
   if (options.customizer) {
@@ -281,7 +285,7 @@ function _areEqual(item1: any, item2: any, passed: any[], options: typeof defaul
  * expect(areEqual(item1, item2, { checkCases: [(item1, item2) => item1.state === item2.state] })).toBe(true);
  * ```
  */
-export default function areEqual(item1: any, item2: any, options?: AreEqualOptions): boolean {
+export default function areEqual(item1: unknown, item2: unknown, options?: AreEqualOptions): boolean {
 
   const op: typeof defaultAreEqualOptions = {
     comparisonProps: options?.comparisonProps || defaultAreEqualOptions.comparisonProps,

@@ -105,7 +105,7 @@ describe('safeJsonStringify', () => {
   });
 
   it('handles circular references gracefully', () => {
-    const obj: any = { a: 1 };
+    const obj: { a: number; self?: unknown } = { a: 1 };
     obj.self = obj;
     expect(safeStringify(obj)).toBe('{"a":1,"self":<<CIRCULAR>>}');
   });
@@ -172,7 +172,7 @@ describe('safeJsonStringify', () => {
   });
 
   it('handles custom objects with circular references', () => {
-    const obj: any = { a: 1 };
+    const obj: { a: number; self?: unknown } = { a: 1 };
     obj.self = obj;
     expect(safeStringify(obj)).toBe('{"a":1,"self":<<CIRCULAR>>}');
   });
@@ -200,5 +200,25 @@ describe('safeJsonStringify', () => {
   it('sorts contents of objects when option is set', async () => {
     const obj = { c: 3, a: 1, b: 2 };
     expect(safeStringify(obj, { sortContents: true })).toBe('{"a":1,"b":2,"c":3}');
+  });
+
+  it('stringifies DataView without throwing (ArrayBuffer view that is not iterable)', () => {
+    const buffer = new ArrayBuffer(3);
+    const view = new DataView(buffer);
+
+    expect(() => safeStringify(view)).not.toThrow();
+    expect(safeStringify(view)).toBe('{}');
+  });
+
+  it('stringifies non-array custom iterables (object with Symbol.iterator)', () => {
+    const iterableObj = {
+      *[Symbol.iterator]() {
+        yield 1;
+        yield 2;
+        yield 3;
+      }
+    };
+
+    expect(safeStringify(iterableObj)).toBe('[1,2,3]');
   });
 });

@@ -2,17 +2,17 @@ import lodashMapValues from 'lodash/mapValues';
 
 
 export interface MapValuesOptions {
-  predicate?: (val: any) => boolean;
+  predicate?: (val: unknown) => boolean;
   ignoreEmpty?: boolean;
 }
 
 
-function isEmptyLimited(obj: any) {
+function isEmptyLimited(obj: unknown) {
   return obj === null || obj === undefined || Number.isNaN(obj);
 }
 
 
-function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options: MapValuesOptions): any {
+function _mapValues<TMapperArgument>(obj: unknown, mapper: (val: TMapperArgument) => unknown, visited: unknown[], options: MapValuesOptions): unknown {
 
   if (visited.includes(obj)) return obj;
 
@@ -20,15 +20,15 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
 
   if (ignoreEmpty && (obj === null || obj === undefined)) return obj;
 
-  if ((typeof obj === typeof 'string' || isEmptyLimited(obj) || Object.keys(obj).length === 0) && !Array.isArray(obj)) {
-    if (!predicate || predicate(obj)) return mapper(obj);
+  if ((typeof obj === 'string' || isEmptyLimited(obj) || Object.keys(Object(obj)).length === 0) && !Array.isArray(obj)) { // eslint-disable-line unicorn/new-for-builtins
+    if (!predicate || predicate(obj)) return mapper(obj as TMapperArgument);
 
     return obj;
   }
 
   visited.push(obj);
 
-  const result = lodashMapValues(obj, (o) => _mapValues(o, mapper, visited, options));
+  const result = lodashMapValues(obj as object, (o) => _mapValues(o, mapper, visited, options));
 
   if (Array.isArray(obj)) return Object.values(result);
 
@@ -137,14 +137,14 @@ function _mapValues(obj: any, mapper: (val: any) => any, visited: any[], options
  * });
  * ```
  */
-export default function mapValues(obj: any, mapper: (val: any) => any, options?: MapValuesOptions): any {
+export default function mapValues<TMapperArgument>(obj: unknown, mapper: (val: TMapperArgument) => unknown, options?: MapValuesOptions): unknown {
 
   const { predicate } = options || {};
   const ignoreEmpty = options?.ignoreEmpty ?? true;
 
   if (obj === null || obj === undefined) return obj;
 
-  if (Object.keys(obj).length === 0 && !Array.isArray(obj)) return obj;
+  if (Object.keys(Object(obj)).length === 0 && !Array.isArray(obj)) return obj; // eslint-disable-line unicorn/new-for-builtins
 
   return _mapValues(obj, mapper, [], { predicate, ignoreEmpty });
 }

@@ -46,7 +46,6 @@ export default [
       '@stylistic/padded-blocks': 'off',
       '@stylistic/quotes': ['error', 'single', { avoidEscape: true }],
       '@stylistic/semi': ['error', 'always'],
-      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-use-before-define': 'error',
       '@typescript-eslint/no-useless-constructor': 'error',
       'array-callback-return': 'error',
@@ -80,6 +79,7 @@ export default [
       'unicorn/no-null': 'off',
       'unicorn/prevent-abbreviations': ['error', {
         replacements: {
+          arg: false,
           args: false,
           arr: false,
           fn: false,

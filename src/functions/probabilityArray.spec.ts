@@ -354,4 +354,135 @@ describe('probabilityArray', () => {
     expect(bar).toHaveLength(0);
     expect(blah).toHaveLength(30);
   });
+
+  it('accepts loose args with a trailing options object (sortOrder: "incoming")', () => {
+    const arr1 = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1]);
+    const arr2 = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'incoming' });
+
+    expect(arr1).toHaveLength(100);
+    expect(arr2).toHaveLength(100);
+    expect(arr2).toEqual(arr1);
+  });
+
+  it('accepts loose args with a trailing options object (sortOrder: "asc")', () => {
+    const arr = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'asc' });
+    expect(arr).toHaveLength(100);
+
+    const blah = arr.slice(0, 10);
+    const foo = arr.slice(10, 40);
+    const bar = arr.slice(40);
+
+    expect(blah).toEqual(Array.from({ length: 10 }, () => 'blah'));
+    expect(foo).toEqual(Array.from({ length: 30 }, () => 'foo'));
+    expect(bar).toEqual(Array.from({ length: 60 }, () => 'bar'));
+  });
+
+  it('accepts loose args with a trailing options object (sortOrder: "desc")', () => {
+    const arr = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'desc' });
+    expect(arr).toHaveLength(100);
+
+    const bar = arr.slice(0, 60);
+    const foo = arr.slice(60, 90);
+    const blah = arr.slice(90);
+
+    expect(bar).toEqual(Array.from({ length: 60 }, () => 'bar'));
+    expect(foo).toEqual(Array.from({ length: 30 }, () => 'foo'));
+    expect(blah).toEqual(Array.from({ length: 10 }, () => 'blah'));
+  });
+
+  it('accepts loose args with a trailing options object (sortOrder: "circular")', () => {
+    const arr = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'circular' });
+    expect(arr).toHaveLength(100);
+
+    const options = ['foo', 'bar', 'blah'];
+
+    for (let i = 0; i < 30; i += 1) {
+      const item = arr[i];
+      const indexInOptions = i % options.length;
+
+      expect(item).toEqual(options[indexInOptions]);
+    }
+
+    options.pop();
+
+    for (let i = 30; i < 70; i += 1) {
+      const item = arr[i];
+      const indexInOptions = i % options.length;
+
+      expect(item).toEqual(options[indexInOptions]);
+    }
+
+    expect(arr.slice(70)).toEqual(Array.from({ length: 30 }, () => 'bar'));
+  });
+
+  it('accepts loose args with a trailing options object (sortOrder: "random")', () => {
+    const arr1 = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'random' });
+    const arr2 = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'random' });
+    const arr3 = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], { sortOrder: 'random' });
+
+    expect(arr1).toHaveLength(100);
+    expect(arr2).toHaveLength(100);
+    expect(arr3).toHaveLength(100);
+
+    const foo1 = arr1.filter((item) => item === 'foo');
+    const bar1 = arr1.filter((item) => item === 'bar');
+    const blah1 = arr1.filter((item) => item === 'blah');
+
+    const foo2 = arr2.filter((item) => item === 'foo');
+    const bar2 = arr2.filter((item) => item === 'bar');
+    const blah2 = arr2.filter((item) => item === 'blah');
+
+    const foo3 = arr3.filter((item) => item === 'foo');
+    const bar3 = arr3.filter((item) => item === 'bar');
+    const blah3 = arr3.filter((item) => item === 'blah');
+
+    expect(foo1).toHaveLength(30);
+    expect(bar1).toHaveLength(60);
+    expect(blah1).toHaveLength(10);
+
+    expect(foo2).toHaveLength(30);
+    expect(bar2).toHaveLength(60);
+    expect(blah2).toHaveLength(10);
+
+    expect(foo3).toHaveLength(30);
+    expect(bar3).toHaveLength(60);
+    expect(blah3).toHaveLength(10);
+
+    expect(arr1).not.toEqual(arr2);
+    expect(arr1).not.toEqual(arr3);
+    expect(arr2).not.toEqual(arr3);
+  });
+
+  it('accepts loose args with a trailing options object (cutoff: "biggest")', () => {
+    const arr = probabilityArray(['foo', 0.3], ['bar', 0.6], ['blah', 0.1], ['boom', 0.3], { cutoff: 'biggest' });
+    expect(arr).toHaveLength(100);
+
+    const bar = arr.filter((item) => item === 'bar');
+
+    expect(bar).toHaveLength(30);
+  });
+
+  it('throws error if no ProbabilityItems were provided (empty call)', () => {
+    expect(() => (probabilityArray as unknown as (...a: unknown[]) => unknown)()).toThrow();
+  });
+
+  it('throws error if no ProbabilityItems were provided (options only)', () => {
+    expect(() => (probabilityArray as unknown as (...a: unknown[]) => unknown)({ sortOrder: 'asc' })).toThrow();
+  });
+
+  it('throws error if not all provided items are ProbabilityItems (bad varargs item)', () => {
+    expect(() => (probabilityArray as unknown as (...a: unknown[]) => unknown)(['foo', 0.3], 'nope')).toThrow();
+  });
+
+  it('throws error if not all provided items are ProbabilityItems (bad tuple shape)', () => {
+    expect(() => (probabilityArray as unknown as (...a: unknown[]) => unknown)(['foo', '0.3'])).toThrow();
+  });
+
+  it('throws error if not all provided items are ProbabilityItems (array form but contains invalid cell)', () => {
+    expect(() => (probabilityArray as unknown as (...a: unknown[]) => unknown)([['foo', 0.3], ['bar', '0.6']])).toThrow();
+  });
+
+  it('throws error if not all provided items are ProbabilityItems (varargs + options but contains invalid cell)', () => {
+    expect(() => (probabilityArray as unknown as (...a: unknown[]) => unknown)(['foo', 0.3], ['bar', '0.6'], { sortOrder: 'incoming' })).toThrow();
+  });
 });

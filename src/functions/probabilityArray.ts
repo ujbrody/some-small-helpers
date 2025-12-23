@@ -1,4 +1,3 @@
-import mapValues from 'lodash/mapValues';
 import shuffle from 'lodash/shuffle';
 
 
@@ -30,7 +29,8 @@ function consolidateDuplicateItems<T>(inputItems: ProbabilityItem<T>[]): Probabi
     }
   }
 
-  return result;
+  // Clamp to avoid negative allocation lengths (negative totals become 0, items will not appear)
+  return result.map(([item, probability]) => [item, Math.max(probability, 0)]);
 }
 
 // This function assumes that the total amounts to more than 100
@@ -169,10 +169,37 @@ interface ProbabilityArrayOptions {
   cutoff?: Cutoff;
 }
 
+type ProbabilityArrayArguments<T> =
+  [...items: ProbabilityItem<T>[]] |
+  [...items: ProbabilityItem<T>[], options: ProbabilityArrayOptions] |
+  [ProbabilityItem<T>[], options?: ProbabilityArrayOptions];
+
+
 const defaultOptions: ProbabilityArrayOptions = {
   sortOrder: 'incoming',
   cutoff: 'last',
 };
+
+function isProbabilityArrayOptions(value: unknown): value is ProbabilityArrayOptions {
+
+  if (value === null || typeof value !== 'object') return false; // last arg is of object type (might have properties matching the options)
+
+  if (Array.isArray(value)) return false; // options cannot be array form. Last arg might be one of the probability array items.
+
+  const { sortOrder, cutoff } = value as ProbabilityArrayOptions;
+
+  const sortOrderPossibleValues = ['incoming', 'asc', 'desc', 'circular', 'random'];
+  const cutoffPossibleValues = ['last', 'biggest', 'smallest', 'normalize', 'spread'];
+
+  if (sortOrder && !sortOrderPossibleValues.includes(sortOrder)) return false;
+  if (cutoff && !cutoffPossibleValues.includes(cutoff)) return false;
+
+  return true; // still might not be ProbabilityArrayOptions and won't have the matching `sortOrder` or `cutoff`, but at this point we don't care. If it doesn't match the shape we'll treat it as {}
+}
+
+function isProbabilityItem(value: unknown): value is [unknown, number] {
+  return Array.isArray(value) && value.length === 2 && typeof value[1] === 'number';
+}
 
 
 /**
@@ -286,13 +313,46 @@ export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
  */
 export default function probabilityArray<T>(ratios: ProbabilityItem<T>[], options?: ProbabilityArrayOptions): T[];
 
-export default function probabilityArray<T>(...args: any[]): T[] {
+export default function probabilityArray<T>(...args: ProbabilityItem<T>[]): T[];
 
-  const options: ProbabilityArrayOptions = args.length < 2 || Array.isArray(args[1]) ? defaultOptions : mapValues(defaultOptions, (value, key) => args[1][key] || value);
+export default function probabilityArray<T>(
+  ...args: [...items: ProbabilityItem<T>[], options: ProbabilityArrayOptions]
+): T[];
 
-  const ratios: ProbabilityItem<T>[] = Array.isArray(args[0]) && args[0][0] !== undefined && typeof args[0][1] === 'number'
-    ? consolidateDuplicateItems(args)
-    : consolidateDuplicateItems(args[0]);
+export default function probabilityArray<T>(
+  ratios: ProbabilityItem<T>[],
+  options?: ProbabilityArrayOptions
+): T[];
+
+export default function probabilityArray<T>(...args: ProbabilityArrayArguments<T>): T[] {
+
+  // const { sortOrder, cutoff }: ProbabilityArrayOptions = args.length >= 2 && isProbabilityArrayOptions(args.at(-1)) ? args.at(-1) as ProbabilityArrayOptions : defaultOptions;
+  const lastArg = args.at(-1);
+  const hasOptions = args.length >= 2 && isProbabilityArrayOptions(lastArg);
+
+  // const ratios: ProbabilityItem<T>[] = Array.isArray(args[0]) && args[0][0] !== undefined && typeof args[0][1] === 'number'
+  //   ? consolidateDuplicateItems(args)
+  //   : consolidateDuplicateItems(args[0]);
+  const { sortOrder, cutoff }: ProbabilityArrayOptions = hasOptions ? lastArg as ProbabilityArrayOptions : defaultOptions;
+
+  const candidates = hasOptions ? args.slice(0, -1) : args;
+  const probabilityCandidates: unknown[] = candidates.length === 1
+    && Array.isArray(candidates[0])
+    && !isProbabilityItem(candidates[0])
+    ? candidates[0]
+    : candidates;
+
+  if (probabilityCandidates.length === 0) {
+    throw new Error('Probability array requires at least one item');
+  }
+
+  const allAreProbabilityItems = probabilityCandidates.every((item) => isProbabilityItem(item));
+
+  if (!allAreProbabilityItems) {
+    throw new Error('Not all provided items are in the correct format to be used to generate probability spread `[item, amount]`');
+  }
+
+  const ratios = consolidateDuplicateItems(probabilityCandidates as ProbabilityItem<T>[]);
 
   if (ratios.length > 100) {
     // More than 100 elements were given so even if each has 0.01 probability, it will always be more than 100
@@ -300,7 +360,7 @@ export default function probabilityArray<T>(...args: any[]): T[] {
     ratios.length = 100;
   }
 
-  sortProbabilityItems(ratios, options.sortOrder);
+  sortProbabilityItems(ratios, sortOrder);
 
   const allocations: T[][] = [];
 
@@ -310,11 +370,11 @@ export default function probabilityArray<T>(...args: any[]): T[] {
     allocations.push(Array.from({ length: amount }, () => item));
   }
 
-  cutoffExcess(allocations, options.cutoff);
+  cutoffExcess(allocations, cutoff);
 
   let result: T[];
 
-  switch (options.sortOrder) {
+  switch (sortOrder) {
     case 'circular': {
       result = [];
       let circulator = 0;

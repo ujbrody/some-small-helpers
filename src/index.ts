@@ -1,3 +1,6 @@
+/* Utility Types */
+export * as Types from './types';
+
 /* All Types */
 
 export { default as isEmpty } from './functions/isEmpty';

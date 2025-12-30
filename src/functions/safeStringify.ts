@@ -145,7 +145,7 @@ function _stringifyValue(val: unknown, passed: unknown[], options: NonNullable<S
  * - Handling special cases, like Maps, Sets, TypedArrays, Symbols, Functions, etc.
  * - Providing safety against circular references or attempts to stringify BigInts
  * - Adding customizations like removing undefined values or sorting the contents of objects and arrays
- * @param {any} val The value to stringify
+ * @param {unknown} val The value to stringify
  * @param {SafeJsonStringifyOptions} [options] (optional) modifies the default behavior of the function
  * @returns {string} The stringified value
  * @example

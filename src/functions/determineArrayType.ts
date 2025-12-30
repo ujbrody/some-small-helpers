@@ -137,7 +137,7 @@ function getDetailedType(value: unknown, options?: DetermineArrayTypeOptions, de
  * If the array contains objects, then the type returned is the type of the first object in the array.
  * The syntax the function uses to describe the object depends on the `verboseObjects` option.
  *
- * @param {any[]} arr - The array to determine the type of.
+ * @param {unknown} arr - The array to determine the type of.
  * @param {DetermineArrayTypeOptions} options - Options for type determination.
  * @returns {string} - The type of the array.
  *

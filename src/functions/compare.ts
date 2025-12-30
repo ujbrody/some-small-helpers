@@ -76,9 +76,9 @@ function resolveCollator(option?: CompareOptionsBase<unknown>['collator']): Intl
  * If you provide a `comparisonFunc`, it takes precedence. Returning `undefined` from that function
  * falls back to the built-in behavior.
  *
- * @param {any} a The first item
- * @param {any} b The second item
- * @param {CompareOptionsBase<any>} options (optional) options to modify the behavior of the function
+ * @param {T} a The first item
+ * @param {T} b The second item
+ * @param {CompareOptionsBase<T>} options (optional) options to modify the behavior of the function
  *
  * @example
  * ```typescript

@@ -25,9 +25,9 @@ function isKeyedEntity(value: unknown): value is Record<string, unknown> {
  * Empty is defined as any type that returns `true` when provided as argument to the `isEmpty` function.
  * *This function modifies the object in place*
  *
- * @param {any} obj Object to clean
+ * @param {unknown} obj Object to clean
  * @param {CleanEmptyOptions} options Options to modify the behavior of the function
- * @returns {any} The object without all empty fields
+ * @returns {unknown} The object without all empty fields
  *
  * Options
  * =======

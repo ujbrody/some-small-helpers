@@ -39,8 +39,8 @@ function _mapValues<TMapperArgument>(obj: unknown, mapper: (val: TMapperArgument
  * Makes a deep mapping of all properties in an object, or cells in array based on a mapper function. This includes nested objects and arrays.
  * Similar to lodash's mapValues, but with the added ability to map arrays and performs deep recursion, while safe from circular referencing.
  *
- * @param {any} obj The object which properties to map
- * @param {(val: any) => any} mapper The mapping function to affect on each property
+ * @param {unknown} obj The object which properties to map
+ * @param {(val: TMapperArgument) => unknown} mapper The mapping function to affect on each property
  * @param {MapValuesOptions} (optional) options to modify the behavior of the function
  * @param {boolean} (optional) A function to determine if to apply the mapper on a property
  *

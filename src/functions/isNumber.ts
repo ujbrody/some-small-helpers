@@ -9,7 +9,7 @@ const defaultOptions: IsNumberOptions = {
 /**
  * Checks if a value is a valid, usable number
  *
- * @param {any} value Any value to check
+ * @param {unknown} value Any value to check
  * @param {IsNumberOptions} options (optional) modifiers
  * @returns {boolean} true if the value is a usable number, false otherwise
  *

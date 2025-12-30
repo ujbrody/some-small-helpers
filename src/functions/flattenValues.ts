@@ -46,9 +46,9 @@ const defaultOptions: FlattenValuesOptions = {
  * Strings are  not treated as enumerable types in this function
  *
  * @template T The type of the values in the array
- * @param {any} obj Object to break down
+ * @param {unknown} obj Object to break down
  * @param {FlattenValuesOptions} options Options to modify the behavior of the function
- * @returns {T[]} a flat array of all the end value nested within the object
+ * @returns {unknown[]} a flat array of all the end value nested within the object
  *
  * @example
  * ```typescript

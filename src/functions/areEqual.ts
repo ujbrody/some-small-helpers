@@ -197,8 +197,8 @@ function _areEqual(item1: unknown, item2: unknown, passed: unknown[], options: t
  * A wrapper around `lodash/isEqual` that takes two items of unspecified type and check if they are equal in values while also providing options to modify the behavior of the function.
  * The function digs recursively into objects and array to analyze comparison between objects.
  *
- * @param {any} item1 The first item
- * @param {any} item2 The second item
+ * @param {unknown} item1 The first item
+ * @param {unknown} item2 The second item
  * @param {AreEqualOptions} options (optional) options to modify the behavior of the function
  *
  * @example

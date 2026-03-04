@@ -3,7 +3,7 @@ import areEqual, { type AreEqualOptions } from './areEqual';
 /**
  * Options for {@link removeDuplicates}. All properties are optional.
  */
-export interface RemoveDuplicatesOptions<T> {
+interface RemoveDuplicatesOptions<T> {
   /**
    * Custom equality. Return `true` if the two items are duplicates.
    * When set, overrides `props` and default deep equality. Third parameter is the full input array.

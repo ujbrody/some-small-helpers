@@ -29,6 +29,7 @@ export { default as mapValues } from './functions/mapValues';
 
 export { default as extract } from './functions/extract';
 export { default as determineArrayType } from './functions/determineArrayType';
+export { default as removeDuplicates } from './functions/removeDuplicates';
 
 
 /* Dates */

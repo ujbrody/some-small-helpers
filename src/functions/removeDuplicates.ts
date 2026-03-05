@@ -1,3 +1,6 @@
+import omit from 'lodash/omit';
+import pick from 'lodash/pick';
+
 import areEqual, { type AreEqualOptions } from './areEqual';
 
 /**
@@ -13,8 +16,16 @@ interface RemoveDuplicatesOptions<T> {
   /**
    * For object items only: compare only these keys to detect duplicates.
    * Ignored for primitives and Dates. Ignored when `comparisonFunc` is set.
+   * If both `onlyProps` and `ignoreProps` are set, `onlyProps` takes precedence.
    */
-  props?: string[];
+  onlyProps?: string[];
+
+  /**
+   * For object items only: compare all keys except these keys when detecting duplicates.
+   * Ignored for primitives and Dates. Ignored when `comparisonFunc` is set.
+   * Ignored when `onlyProps` is set.
+   */
+  ignoreProps?: string[];
 
   /**
    * When comparing nested arrays inside objects, treat same elements in any order as equal.
@@ -52,8 +63,10 @@ function isObjectLike(x: unknown): x is object {
  * @param options - Optional configuration.
  * @param options.comparisonFunc - Custom equality. Return `true` if two items are duplicates.
  *   When set, `props` and default equality are ignored. Third parameter is the full input array.
- * @param options.props - For object items only: compare only these keys to detect duplicates.
+ * @param options.onlyProps - For object items only: compare only these keys to detect duplicates.
  *   Ignored for primitives/Dates. Ignored when `comparisonFunc` is set. If omitted, all keys are compared.
+ * @param options.ignoreProps - For object items only: compare all keys except these keys when detecting duplicates.
+ *   Ignored for primitives/Dates. Ignored when `comparisonFunc` is set. Ignored when `onlyProps` is set.
  * @param options.ignoreArrayOrder - When comparing nested arrays inside objects, treat same elements in
  *   any order as equal. Default `true`. Only used when `comparisonFunc` is not set.
  * @param options.selector - When two items are equal, keep the "better" one. Called as
@@ -73,7 +86,7 @@ function isObjectLike(x: unknown): x is object {
  *   { street: '1234 Place', city: 'Atlanta', state: 'Georgia' },
  *   { street: '1234 Place', city: 'San Francisco', state: 'CA' }
  * ];
- * removeDuplicates(arr, { props: ['street', 'city'] });
+ * removeDuplicates(arr, { onlyProps: ['street', 'city'] });
  * // => [ { street: '1234 Place', city: 'Atlanta', state: 'GA' }, { street: '1234 Place', city: 'San Francisco', state: 'CA' } ]
  *
  * @example Custom comparison (comparisonFunc)
@@ -87,7 +100,7 @@ function isObjectLike(x: unknown): x is object {
  *   { id: 1, name: 'Bob', age: 50 }
  * ];
  * removeDuplicates(people, {
- *   props: ['id'],
+ *   onlyProps: ['id'],
  *   selector: (a, b) => a.age - b.age  // keep the one with higher age
  * });
  * // => [ { id: 2, name: 'Rick', age: 30 }, { id: 1, name: 'Bob', age: 50 } ]
@@ -111,7 +124,8 @@ export default function removeDuplicates<T>(val: readonly T[], options?: RemoveD
     Omit<RemoveDuplicatesOptions<T>, 'keepWhenEqual'> = {
       keepWhenEqual: options?.keepWhenEqual ?? 'first',
       comparisonFunc: options?.comparisonFunc,
-      props: options?.props,
+      onlyProps: options?.onlyProps,
+      ignoreProps: options?.ignoreProps,
       ignoreArrayOrder: options?.ignoreArrayOrder ?? true,
       selector: options?.selector
     };
@@ -122,11 +136,26 @@ export default function removeDuplicates<T>(val: readonly T[], options?: RemoveD
     if (op.comparisonFunc) return op.comparisonFunc(a, b, val);
 
     const bothObjects = isObjectLike(a) && isObjectLike(b);
+    const bothDates = a instanceof Date && b instanceof Date;
 
-    const areEqualOptions: AreEqualOptions = {
-      ignoreArrayOrder: op.ignoreArrayOrder,
-      comparisonProps: bothObjects ? (op.props ?? []) : []
-    };
+    // onlyProps / ignoreProps apply only to non-Date objects
+    if (bothObjects && !bothDates) {
+      if (op.onlyProps && op.onlyProps.length > 0) {
+        const aPicked = pick(a as Record<string, unknown>, op.onlyProps);
+        const bPicked = pick(b as Record<string, unknown>, op.onlyProps);
+
+        return areEqual(aPicked, bPicked, { ignoreArrayOrder: op.ignoreArrayOrder });
+      }
+
+      if (op.ignoreProps && op.ignoreProps.length > 0) {
+        const aOmitted = omit(a as Record<string, unknown>, op.ignoreProps);
+        const bOmitted = omit(b as Record<string, unknown>, op.ignoreProps);
+
+        return areEqual(aOmitted, bOmitted, { ignoreArrayOrder: op.ignoreArrayOrder });
+      }
+    }
+
+    const areEqualOptions: AreEqualOptions = { ignoreArrayOrder: op.ignoreArrayOrder };
 
     return areEqual(a, b, areEqualOptions);
   };

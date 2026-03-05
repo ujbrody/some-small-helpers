@@ -79,7 +79,7 @@ describe('removeDuplicates', () => {
       { id: 2, name: 'second' },
       { id: 1, name: 'later' }
     ];
-    expect(removeDuplicates(arr, { keepWhenEqual: 'second', props: ['id'] })).toEqual([
+    expect(removeDuplicates(arr, { keepWhenEqual: 'second', onlyProps: ['id'] })).toEqual([
       { id: 2, name: 'second' },
       { id: 1, name: 'later' }
     ]);
@@ -102,7 +102,43 @@ describe('removeDuplicates', () => {
       { firstName: 'Bob', lastName: 'Scott', city: 'Burlingame' }
     ];
 
-    expect(removeDuplicates(arr, { props: ['firstName', 'lastName'] })).toEqual(expectedArr);
+    expect(removeDuplicates(arr, { onlyProps: ['firstName', 'lastName'] })).toEqual(expectedArr);
+  });
+
+  it('removes duplicate by comparing all properties except for ones marked to be ignored', () => {
+    const arr = [
+      { firstName: 'Bill', lastName: 'Stepka', city: 'San Francisco' },
+      { firstName: 'Mariko', lastName: 'Kawaguchi', city: 'Alameda' },
+      { firstName: 'Bill', lastName: 'Stepka', city: 'San Francisco' },
+      { firstName: 'Bill', lastName: 'Polka', city: 'San Francisco' },
+      { firstName: 'Mariko', lastName: 'Kawaguchi', city: 'Alameda' },
+      { firstName: 'Bob', lastName: 'Scott', city: 'Burlingame' },
+      { firstName: 'Bill', lastName: 'Stepka', city: 'Alameda' }
+    ];
+    const expectedArr = [
+      { firstName: 'Bill', lastName: 'Stepka', city: 'San Francisco' },
+      { firstName: 'Mariko', lastName: 'Kawaguchi', city: 'Alameda' },
+      { firstName: 'Bill', lastName: 'Polka', city: 'San Francisco' },
+      { firstName: 'Bob', lastName: 'Scott', city: 'Burlingame' }
+    ];
+
+    expect(removeDuplicates(arr, { ignoreProps: ['city'] })).toEqual(expectedArr);
+  });
+
+  it('ignores `ignoreProps` when `onlyProps` is provided', () => {
+    const arr = [
+      { firstName: 'Bill', lastName: 'Stepka', city: 'San Francisco' },
+      { firstName: 'Mariko', lastName: 'Kawaguchi', city: 'Alameda' },
+      { firstName: 'Bill', lastName: 'Stepka', city: 'San Francisco' },
+      { firstName: 'Bill', lastName: 'Polka', city: 'San Francisco' },
+    ];
+    const expectedArr = [
+      { firstName: 'Bill', lastName: 'Stepka', city: 'San Francisco' },
+      { firstName: 'Mariko', lastName: 'Kawaguchi', city: 'Alameda' },
+      { firstName: 'Bill', lastName: 'Polka', city: 'San Francisco' }
+    ];
+
+    expect(removeDuplicates(arr, { onlyProps: ['firstName', 'lastName'], ignoreProps: ['lastName'] })).toEqual(expectedArr);
   });
 
   it('uses comparisonFunc when provided and ignores props', () => {
@@ -112,7 +148,7 @@ describe('removeDuplicates', () => {
       { key: 1, tag: 'different' }
     ];
     const compareByKey = (a: typeof arr[0], b: typeof arr[0]) => a.key === b.key;
-    expect(removeDuplicates(arr, { comparisonFunc: compareByKey, props: ['key', 'tag'] })).toEqual([
+    expect(removeDuplicates(arr, { comparisonFunc: compareByKey, onlyProps: ['key', 'tag'] })).toEqual([
       { key: 1, tag: 'a' },
       { key: 2, tag: 'b' }
     ]);
@@ -160,7 +196,7 @@ describe('removeDuplicates', () => {
       { id: 2, v: 'second' }
     ];
     const selector = (a: typeof arr[0], b: typeof arr[0]) => (b.v === 'last' ? -1 : 1);
-    const result = removeDuplicates(arr, { props: ['id'], selector });
+    const result = removeDuplicates(arr, { onlyProps: ['id'], selector });
     expect(result).toEqual([
       { id: 1, v: 'last' },
       { id: 2, v: 'second' }
@@ -203,8 +239,8 @@ describe('removeDuplicates', () => {
     const selectorAsc = (person1: typeof arr[0], person2: typeof arr[0]) => person1.age - person2.age;
     const selectorDsc = (person1: typeof arr[0], person2: typeof arr[0]) => person2.age - person1.age;
 
-    const sutAsc = removeDuplicates(arr, { selector: selectorAsc, props: ['firstName', 'lastName'] });
-    const sutDsc = removeDuplicates(arr, { selector: selectorDsc, props: ['firstName', 'lastName'] });
+    const sutAsc = removeDuplicates(arr, { selector: selectorAsc, onlyProps: ['firstName', 'lastName'] });
+    const sutDsc = removeDuplicates(arr, { selector: selectorDsc, onlyProps: ['firstName', 'lastName'] });
 
     const expectedAsc = [
       { firstName: 'Mariko', lastName: 'Kawaguchi', age: 30 },
@@ -226,7 +262,7 @@ describe('removeDuplicates', () => {
       { firstName: 'Bill', lastName: 'Stepka', position: 'tester', age: 40 }
     ];
 
-    const sut = removeDuplicates(arr, { selector: (person1: typeof arr[0], person2: typeof arr[0]) => person1.age - person2.age, props: ['firstName', 'lastName'] });
+    const sut = removeDuplicates(arr, { selector: (person1: typeof arr[0], person2: typeof arr[0]) => person1.age - person2.age, onlyProps: ['firstName', 'lastName'] });
 
     const expected = [
       { firstName: 'Bill', lastName: 'Stepka', position: 'developer', age: 40 },
@@ -243,7 +279,7 @@ describe('removeDuplicates', () => {
       { firstName: 'Bill', lastName: 'Stepka', position: 'tester', age: 40 }
     ];
 
-    const sut = removeDuplicates(arr, { selector: (person1: typeof arr[0], person2: typeof arr[0]) => person1.age - person2.age, props: ['firstName', 'lastName'], keepWhenEqual: 'second' });
+    const sut = removeDuplicates(arr, { selector: (person1: typeof arr[0], person2: typeof arr[0]) => person1.age - person2.age, onlyProps: ['firstName', 'lastName'], keepWhenEqual: 'second' });
 
     const expected = [
       { firstName: 'Mariko', lastName: 'Kawaguchi', position: 'developer', age: 30 },
@@ -279,7 +315,7 @@ describe('removeDuplicates', () => {
       { id: 1, version: 1 }
     ];
     const selector = (a: typeof arr[0], b: typeof arr[0]) => a.version - b.version;
-    expect(removeDuplicates(arr, { props: ['id'], selector })).toEqual([{ id: 1, version: 2 }]);
+    expect(removeDuplicates(arr, { onlyProps: ['id'], selector })).toEqual([{ id: 1, version: 2 }]);
   });
 
   it('selector returning negative keeps current (second) occurrence', () => {
@@ -288,7 +324,7 @@ describe('removeDuplicates', () => {
       { id: 1, version: 2 }
     ];
     const selector = (a: typeof arr[0], b: typeof arr[0]) => a.version - b.version;
-    expect(removeDuplicates(arr, { props: ['id'], selector })).toEqual([{ id: 1, version: 2 }]);
+    expect(removeDuplicates(arr, { onlyProps: ['id'], selector })).toEqual([{ id: 1, version: 2 }]);
   });
 
   it('handles array of mixed types when comparisonFunc defines equality', () => {

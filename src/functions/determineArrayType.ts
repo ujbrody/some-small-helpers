@@ -3,6 +3,12 @@ import type AnyClass from '~types/AnyClass';
 interface DetermineArrayTypeOptions {
   verboseObjects?: 'all' | 'none' | 'top-level';
   identifyClasses?: AnyClass[];
+  ignoreCustomClassNames?: boolean;
+  nullIsEmpty?: boolean;
+  discoverTypes?: {
+    predicate: (value: unknown) => boolean;
+    discoveredType: string;
+  }[];
 }
 
 

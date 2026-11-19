@@ -22,9 +22,9 @@ updated_at: "2026-11-19"
 
 ## Plan dashboard
 
-**Current position:** 🟦 Ready (Step 4: Built-in identification helper)  
-**Progress:** `3 of 8 steps complete`  
-**Next action:** `Add the private identifyBuiltIn helper per the P4 table`  
+**Current position:** 🟦 Ready (Step 5: `ignoreCustomClassNames` classification)  
+**Progress:** `4 of 8 steps complete`  
+**Next action:** `Call identifyBuiltIn from getDetailedType under ignoreCustomClassNames and skip the plain-object key check`  
 **Awaiting:** `Nothing`  
 **Blocker:** `None`
 
@@ -33,8 +33,8 @@ updated_at: "2026-11-19"
 | 🟩 Complete | 1. Baseline check | 2026-11-19 at `c3695a0`: 17/349 tests pass, build passes, `tsd` fails only at the known `compare.test-d.ts:53` |
 | 🟩 Complete | 2. Option types | Three optional fields added. ESLint clean, build passes, emitted `.d.ts` shows them, 349 tests pass. |
 | 🟩 Complete | 3. Recursion context and cycle protection | Wrapper, internal function and level body split. `'<circular>'` at both traversal points. 349 tests pass. 12/12 scratch cycle checks match the plan. |
-| 🟦 Ready | 4. Built-in identification helper | — |
-| ⬜ Not started | 5. `ignoreCustomClassNames` classification | — |
+| 🟩 Complete | 4. Built-in identification helper | Private `identifyBuiltIn` added. 349 tests pass. 61/61 scratch checks. DataView uses the `buffer` getter (see evidence). |
+| 🟦 Ready | 5. `ignoreCustomClassNames` classification | — |
 | ⬜ Not started | 6. Discovery and the unified level comparison | — |
 | ⬜ Not started | 7. Runtime tests | — |
 | ⬜ Not started | 8. Docs, lint, build and type check | — |
@@ -250,7 +250,7 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
 | `Map`, `Set` | `size` getter of each prototype | No |
 | `WeakMap`, `WeakSet` | `X.prototype.has.call(v, {})` | No |
 | `ArrayBuffer`, `SharedArrayBuffer` (guarded) | `byteLength` getter of each prototype | No |
-| `DataView` | `DataView.prototype.byteLength` getter | No |
+| `DataView` | `DataView.prototype.buffer` getter (changed from `byteLength` in Step 4, which throws for detached buffers) | No |
 | `Int8Array`, `Uint8Array`, `Uint8ClampedArray`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`, `Float32Array`, `Float64Array`, `BigInt64Array`, `BigUint64Array`, `Float16Array` (guarded) | The intrinsic `%TypedArray%.prototype[Symbol.toStringTag]` getter | No |
 | `Number`, `String`, `Boolean`, `BigInt`, `Symbol` (boxed) | `X.prototype.valueOf.call(v)` | No |
 | `Error`, `EvalError`, `RangeError`, `ReferenceError`, `SyntaxError`, `TypeError`, `URIError`, `AggregateError` (guarded), `SuppressedError` (guarded) | Is it an error? `Error.isError(v)` where available, else `instanceof Error`. Which label? The nearest of these intrinsic prototypes found by walking the prototype chain. | Yes, through Proxy traps. Errors propagate. |
@@ -366,14 +366,23 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
     - **Tests:** Jest 17 suites / 349 tests pass.
     - **Scratch check:** a throwaway script outside the repo ran the plan's cycle-table cases against `dist/index.js`, and 12/12 matched, including getter-error propagation (the same error object). The permanent tests come in Step 7.
 
-- [ ] 🟦 **Step 4 — Built-in identification helper**
+- [x] 🟩 **Step 4 — Built-in identification helper**
   - **Change/boundary:** Add a private `identifyBuiltIn(value: object): string | undefined` that follows the P4 table. Narrow catches only. Guarded availability.
   - **Dependencies:** Step 2.
   - **Verification/test intent:** Step 7, groups B and C.
   - **Documentation impact:** Document the supported set and the limitations.
-  - **Current result/evidence:** —
+  - **Current result/evidence:** 2026-11-19, in `src/functions/determineArrayType.ts`.
+    - **Helper:** private `identifyBuiltIn`, with its intrinsics captured once at module load and every type guarded for availability.
+    - **Brand checks** (each catches only `TypeError` and rethrows anything else): Date `getTime`, RegExp `source`, Map and Set `size`, WeakMap and WeakSet `has`, ArrayBuffer and SharedArrayBuffer `byteLength`, the boxed-primitive `valueOf` methods.
+    - **One deviation from the table:** DataView uses the `buffer` getter instead of `byteLength`, because `byteLength` throws for a view over a detached buffer. That would have classified it as not a DataView.
+    - **Typed arrays:** the intrinsic `%TypedArray%.prototype[Symbol.toStringTag]` getter, limited to the 12 approved names.
+    - **Errors:** `Error.isError` (with an `instanceof Error` fallback), then the nearest standard error prototype, and `'Error'` across realms.
+    - **Promise:** `instanceof`.
+    - **Lint exception:** a temporary `no-unused-vars` disable on the helper, to be removed in Step 5 when it gets its caller.
+    - **Lint, build and tests:** ESLint clean. `npm run build` exits 0, and the `.d.ts` has no internals. Jest 349/349.
+    - **Scratch check:** a throwaway script outside the repo transpiled the source in memory and called the private helper. 61/61 matched: every supported type, including the guarded ones (all present in Node 26.13.0); subclasses (`MyDate`, `AppError`, `BadInput`, `MyMap`, `Bytes`, `Buffer` → `'Uint8Array'`, `MyPromise`); a class named `Date`, a spoofed `toStringTag`, a swapped `Date.prototype`, a Proxy around a `Map`, plain and custom objects, and the deferred types (Intl, `WeakRef`, `FinalizationRegistry`, Temporal, `URL`), all → not built-in; a detached `DataView` → `'DataView'`; cross-realm `Map`, `Date`, `TypeError` → `'Error'` and `Promise` → not built-in; a Proxy trap error propagated as the same object.
 
-- [ ] ⬜ **Step 5 — `ignoreCustomClassNames` classification**
+- [ ] 🟦 **Step 5 — `ignoreCustomClassNames` classification**
   - **Change/boundary:** In `getDetailedType`'s object branch, after `identifyClasses` and before the typed-array allowlist and constructor-name checks: when the option is set, return `identifyBuiltIn(value) ?? 'object'`.
   - **Dependencies:** Steps 3 and 4.
   - **Verification/test intent:** Step 7, groups A, D and H.

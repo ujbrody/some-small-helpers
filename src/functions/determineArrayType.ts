@@ -24,6 +24,149 @@ interface Context {
 const CIRCULAR = '<circular>';
 
 
+/*
+ * Built-in identification (used only under `ignoreCustomClassNames`)
+ * ===================================================================
+ * Built-ins are recognized by what a value actually is, not by its constructor name or `Symbol.toStringTag`,
+ * so a user-defined class named `Date` is not mistaken for the built-in `Date`.
+ *
+ * Most types are recognized with a "brand check": an intrinsic method or getter that only succeeds when the value
+ * has that built-in's internal slot. These checks never run user code (not even Proxy traps), work across realms,
+ * and also recognize user-defined subclasses, which carry the base type's internal slot.
+ * The Error family and `Promise` have no such check and are recognized through the prototype chain instead.
+ *
+ * Intrinsics are captured once, when the module loads. Types the runtime does not provide are skipped.
+ */
+
+type Intrinsic = (this: unknown, ...args: unknown[]) => unknown;
+
+const runtimeGlobals = globalThis as unknown as Record<string, unknown>;
+
+function asIntrinsic(candidate: unknown): Intrinsic | undefined {
+  return typeof candidate === 'function' ? candidate as Intrinsic : undefined;
+}
+
+function prototypeOfGlobal(name: string): object | undefined {
+  const constructor = runtimeGlobals[name];
+  if (typeof constructor !== 'function') {
+    return undefined;
+  }
+  const { prototype } = constructor as { prototype?: unknown };
+  return typeof prototype === 'object' && prototype !== null ? prototype : undefined;
+}
+
+function intrinsicGetter(prototype: object | undefined, key: PropertyKey): Intrinsic | undefined {
+  return prototype ? asIntrinsic(Object.getOwnPropertyDescriptor(prototype, key)?.get) : undefined;
+}
+
+function intrinsicMethod(prototype: object | undefined, key: string): Intrinsic | undefined {
+  return prototype ? asIntrinsic(Object.getOwnPropertyDescriptor(prototype, key)?.value) : undefined;
+}
+
+// Each check throws a TypeError unless the value has the corresponding internal slot.
+const BRAND_CHECKS: { label: string; check: Intrinsic | undefined; args: unknown[] }[] = [
+  { label: 'Date', check: intrinsicMethod(Date.prototype, 'getTime'), args: [] },
+  { label: 'RegExp', check: intrinsicGetter(RegExp.prototype, 'source'), args: [] },
+  { label: 'Map', check: intrinsicGetter(Map.prototype, 'size'), args: [] },
+  { label: 'Set', check: intrinsicGetter(Set.prototype, 'size'), args: [] },
+  { label: 'WeakMap', check: intrinsicMethod(WeakMap.prototype, 'has'), args: [{}] },
+  { label: 'WeakSet', check: intrinsicMethod(WeakSet.prototype, 'has'), args: [{}] },
+  { label: 'ArrayBuffer', check: intrinsicGetter(ArrayBuffer.prototype, 'byteLength'), args: [] },
+  { label: 'SharedArrayBuffer', check: intrinsicGetter(prototypeOfGlobal('SharedArrayBuffer'), 'byteLength'), args: [] },
+  // `buffer` rather than `byteLength`, which also throws for a view over a detached buffer
+  { label: 'DataView', check: intrinsicGetter(DataView.prototype, 'buffer'), args: [] },
+  { label: 'Number', check: intrinsicMethod(Number.prototype, 'valueOf'), args: [] },
+  { label: 'String', check: intrinsicMethod(String.prototype, 'valueOf'), args: [] },
+  { label: 'Boolean', check: intrinsicMethod(Boolean.prototype, 'valueOf'), args: [] },
+  { label: 'BigInt', check: intrinsicMethod(prototypeOfGlobal('BigInt'), 'valueOf'), args: [] },
+  { label: 'Symbol', check: intrinsicMethod(Symbol.prototype, 'valueOf'), args: [] },
+];
+
+// The intrinsic %TypedArray%.prototype[Symbol.toStringTag] getter returns the element type name from the internal slot,
+// or undefined (without throwing) for anything that is not a typed array.
+const typedArrayTag = intrinsicGetter(Object.getPrototypeOf(Int8Array.prototype) as object, Symbol.toStringTag);
+
+const TYPED_ARRAY_NAMES = new Set([
+  'Int8Array', 'Uint8Array', 'Uint8ClampedArray',
+  'Int16Array', 'Uint16Array',
+  'Int32Array', 'Uint32Array',
+  'Float16Array', 'Float32Array', 'Float64Array',
+  'BigInt64Array', 'BigUint64Array',
+]);
+
+// Standard error prototypes, mapped to their labels. Error.prototype is matched last, as the common ancestor.
+const ERROR_PROTOTYPE_LABELS = new Map<object, string>();
+for (const name of ['TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'EvalError', 'URIError', 'AggregateError', 'SuppressedError', 'Error']) {
+  const prototype = prototypeOfGlobal(name);
+  if (prototype) {
+    ERROR_PROTOTYPE_LABELS.set(prototype, name);
+  }
+}
+
+// Error.isError checks the internal slot (cross-realm, no user code). It is not available on every runtime.
+const isErrorIntrinsic = asIntrinsic((Error as unknown as Record<string, unknown>).isError);
+
+function passesBrandCheck(check: Intrinsic, value: object, args: unknown[]): boolean {
+  try {
+    Reflect.apply(check, value, args);
+    return true;
+  } catch (error) {
+    // Only the brand check's own failure means "not this type". The check runs no user code, but rethrow anything else.
+    if (error instanceof TypeError) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+function identifyError(value: object): string | undefined {
+  // Without Error.isError, fall back to instanceof (same realm only; may run Proxy traps, whose errors propagate)
+  const isError = isErrorIntrinsic ? Reflect.apply(isErrorIntrinsic, undefined, [value]) === true : value instanceof Error;
+  if (!isError) {
+    return undefined;
+  }
+  // Report the nearest standard error type in the prototype chain: a subclass of TypeError is a 'TypeError'
+  for (let prototype = Object.getPrototypeOf(value) as object | null; prototype !== null; prototype = Object.getPrototypeOf(prototype) as object | null) {
+    const label = ERROR_PROTOTYPE_LABELS.get(prototype);
+    if (label) {
+      return label;
+    }
+  }
+  // An error from another realm: its prototypes are not this realm's intrinsics
+  return 'Error';
+}
+
+/**
+ * Returns the label of a supported JavaScript built-in, or `undefined` when the value is not one of them.
+ * User-defined subclasses report the built-in they extend.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used from Step 5 of SSH-1 (ignoreCustomClassNames)
+function identifyBuiltIn(value: object): string | undefined {
+  for (const { label, check, args } of BRAND_CHECKS) {
+    if (check && passesBrandCheck(check, value, args)) {
+      return label;
+    }
+  }
+
+  const tag = typedArrayTag ? Reflect.apply(typedArrayTag, value, []) : undefined;
+  if (typeof tag === 'string' && TYPED_ARRAY_NAMES.has(tag)) {
+    return tag;
+  }
+
+  const errorLabel = identifyError(value);
+  if (errorLabel) {
+    return errorLabel;
+  }
+
+  // No side-effect-free brand check exists for Promise: same realm only, may run Proxy traps
+  if (value instanceof Promise) {
+    return 'Promise';
+  }
+
+  return undefined;
+}
+
+
 function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | undefined, depth: number, context: Context): string {
   const verboseObjects = options?.verboseObjects ?? 'top-level';
   // Handle null separately since typeof null returns 'object'

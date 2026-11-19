@@ -11,8 +11,20 @@ interface DetermineArrayTypeOptions {
   }[];
 }
 
+/**
+ * Internal recursion state.
+ * `path` holds the arrays and objects currently being traversed (the active ancestors), so that revisiting one
+ * of them can be reported as a cycle instead of recursing forever. Entries are removed when traversal unwinds,
+ * so a value referenced repeatedly in separate branches is not mistaken for a cycle.
+ */
+interface Context {
+  path: Set<object>;
+}
 
-function getDetailedType(value: unknown, options?: DetermineArrayTypeOptions, depth = 0): string {
+const CIRCULAR = '<circular>';
+
+
+function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | undefined, depth: number, context: Context): string {
   const verboseObjects = options?.verboseObjects ?? 'top-level';
   // Handle null separately since typeof null returns 'object'
   if (value === null) {
@@ -48,8 +60,13 @@ function getDetailedType(value: unknown, options?: DetermineArrayTypeOptions, de
         return '[empty]';
       }
 
+      // Following an array that is already being traversed would recurse forever
+      if (context.path.has(value)) {
+        return CIRCULAR;
+      }
+
       // Determine the type of the array's contents
-      const innerType = determineArrayType(value, options); // eslint-disable-line @typescript-eslint/no-use-before-define
+      const innerType = determineArrayTypeInternal(value, options, context); // eslint-disable-line @typescript-eslint/no-use-before-define
 
       // Return [type] notation
       return `[${innerType}]`;
@@ -93,21 +110,31 @@ function getDetailedType(value: unknown, options?: DetermineArrayTypeOptions, de
     const shouldBeVerbose = verboseObjects === 'all' || (verboseObjects === 'top-level' && depth === 0);
 
     if (shouldBeVerbose) {
+      // Expanding an object that is already being traversed would recurse forever
+      if (context.path.has(value)) {
+        return CIRCULAR;
+      }
+
       // Create a new context with increased depth for recursive calls
       const newDepth = depth + 1;
 
-      // Get object properties and their types
-      const keys = Object.keys(value) as (keyof typeof value)[];
-      if (keys.length === 0) {
-        return '{}'; // Empty object
+      context.path.add(value);
+      try {
+        // Get object properties and their types
+        const keys = Object.keys(value) as (keyof typeof value)[];
+        if (keys.length === 0) {
+          return '{}'; // Empty object
+        }
+
+        const properties = keys.map((key) => {
+          const propType = getDetailedType(value[key], options, newDepth, context);
+          return `${key}: ${propType}`;
+        });
+
+        return `{ ${properties.join(', ')} }`;
+      } finally {
+        context.path.delete(value);
       }
-
-      const properties = keys.map((key) => {
-        const propType = getDetailedType(value[key], options, newDepth);
-        return `${key}: ${propType}`;
-      });
-
-      return `{ ${properties.join(', ')} }`;
     }
     // Not verbose at this level
     return 'object';
@@ -204,7 +231,11 @@ function getDetailedType(value: unknown, options?: DetermineArrayTypeOptions, de
  * ```
  */
 export default function determineArrayType(arr: unknown, options?: DetermineArrayTypeOptions) {
+  return determineArrayTypeInternal(arr, options, { path: new Set() }); // eslint-disable-line @typescript-eslint/no-use-before-define
+}
 
+
+function determineArrayTypeInternal(arr: unknown, options: DetermineArrayTypeOptions | undefined, context: Context): string {
   if (!Array.isArray(arr)) {
     return 'not an array';
   }
@@ -213,6 +244,18 @@ export default function determineArrayType(arr: unknown, options?: DetermineArra
   if (arr.length === 0) {
     return 'empty';
   }
+
+  // Mark this array as being traversed for the duration of its classification
+  context.path.add(arr);
+  try {
+    return classifyArrayLevel(arr, options, context); // eslint-disable-line @typescript-eslint/no-use-before-define
+  } finally {
+    context.path.delete(arr);
+  }
+}
+
+
+function classifyArrayLevel(arr: unknown[], options: DetermineArrayTypeOptions | undefined, context: Context): string {
   // Special handling for arrays of arrays where some might be empty
   let nonEmptyArraysType: string | null = null;
   let hasArrays = false;
@@ -227,7 +270,7 @@ export default function determineArrayType(arr: unknown, options?: DetermineArra
       }
       hasNonEmptyArrays = true;
       // Get the type of this non-empty array
-      const arrayType = getDetailedType(item, options);
+      const arrayType = getDetailedType(item, options, 0, context);
       if (nonEmptyArraysType === null) {
         // This is the first non-empty array we've found
         nonEmptyArraysType = arrayType;
@@ -257,25 +300,25 @@ export default function determineArrayType(arr: unknown, options?: DetermineArra
   // If all elements are regular objects, handle their property comparison
   if (allObjects) {
     // Get the keys of the first object as a reference
-    const firstObjKeys = Object.keys(arr[0]).sort().join(',');
+    const firstObjKeys = Object.keys(arr[0] as object).sort().join(',');
     // Check if all objects have the same keys
     for (let i = 1; i < arr.length; i += 1) {
-      const currentObjKeys = Object.keys(arr[i]).sort().join(',');
+      const currentObjKeys = Object.keys(arr[i] as object).sort().join(',');
       if (currentObjKeys !== firstObjKeys) {
         // If objects have different structures, return "[mixed object]"
         return 'mixed object';
       }
     }
     // All objects have the same structure, return the detailed type of the first one
-    return getDetailedType(arr[0], options);
+    return getDetailedType(arr[0], options, 0, context);
   }
   // If all arrays were empty, or we're not dealing with arrays of arrays,
   // fall back to the original logic
   // Get the type of the first element to compare with others
-  const firstType = getDetailedType(arr[0], options);
+  const firstType = getDetailedType(arr[0], options, 0, context);
   // Check if all elements have the same type
   for (let i = 1; i < arr.length; i += 1) {
-    if (getDetailedType(arr[i], options) !== firstType) {
+    if (getDetailedType(arr[i], options, 0, context) !== firstType) {
       return 'mix';
     }
   }

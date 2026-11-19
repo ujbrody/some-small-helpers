@@ -22,9 +22,9 @@ updated_at: "2026-11-19"
 
 ## Plan dashboard
 
-**Current position:** 🟦 Ready (Step 3: Recursion context and cycle protection)  
-**Progress:** `2 of 8 steps complete`  
-**Next action:** `Split determineArrayType into a public wrapper and a private recursive function carrying the path context`  
+**Current position:** 🟦 Ready (Step 4: Built-in identification helper)  
+**Progress:** `3 of 8 steps complete`  
+**Next action:** `Add the private identifyBuiltIn helper per the P4 table`  
 **Awaiting:** `Nothing`  
 **Blocker:** `None`
 
@@ -32,8 +32,8 @@ updated_at: "2026-11-19"
 |---|---|---|
 | 🟩 Complete | 1. Baseline check | 2026-11-19 at `c3695a0`: 17/349 tests pass, build passes, `tsd` fails only at the known `compare.test-d.ts:53` |
 | 🟩 Complete | 2. Option types | Three optional fields added. ESLint clean, build passes, emitted `.d.ts` shows them, 349 tests pass. |
-| 🟦 Ready | 3. Recursion context and cycle protection | — |
-| ⬜ Not started | 4. Built-in identification helper | — |
+| 🟩 Complete | 3. Recursion context and cycle protection | Wrapper, internal function and level body split. `'<circular>'` at both traversal points. 349 tests pass. 12/12 scratch cycle checks match the plan. |
+| 🟦 Ready | 4. Built-in identification helper | — |
 | ⬜ Not started | 5. `ignoreCustomClassNames` classification | — |
 | ⬜ Not started | 6. Discovery and the unified level comparison | — |
 | ⬜ Not started | 7. Runtime tests | — |
@@ -350,7 +350,7 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
   - **Documentation impact:** JSDoc is done in Step 8.
   - **Current result/evidence:** 2026-11-19. `ignoreCustomClassNames`, `nullIsEmpty` and `discoverTypes` added to `DetermineArrayTypeOptions` in `src/functions/determineArrayType.ts`. No other code changed. ESLint on the file: clean. `npm run build`: exit 0. `dist/functions/determineArrayType.d.ts` contains all three fields. Jest: 17 suites / 349 tests passed.
 
-- [ ] 🟦 **Step 3 — Recursion context and cycle protection**
+- [x] 🟩 **Step 3 — Recursion context and cycle protection**
   - **Change/boundary:**
     - Split the public `determineArrayType` into a wrapper plus a private recursive function that takes the internal context.
     - Pass the context through `getDetailedType`.
@@ -358,9 +358,15 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
   - **Dependencies:** Step 2.
   - **Verification/test intent:** Step 7, group G. All existing tests pass unchanged.
   - **Documentation impact:** Document cycles and the marker semantics.
-  - **Current result/evidence:** —
+  - **Current result/evidence:** 2026-11-19, in `src/functions/determineArrayType.ts`.
+    - **Structure:** the public `determineArrayType` (signature unchanged) creates `{ path: new Set() }` and calls the private `determineArrayTypeInternal`. That function keeps the not-an-array and empty guards, adds the array to `path`, and runs the unchanged level body, now `classifyArrayLevel`, removing the array in `finally`.
+    - **Traversal checks:** `getDetailedType` takes the context. It returns `'<circular>'` before recursing into an array already on `path`, and before expanding an object already on `path`; expanded objects are added for the duration of their expansion.
+    - **Typing:** `classifyArrayLevel` takes `unknown[]` instead of the implicit `any[]`, so the key comparison casts to `object`, where every item is already confirmed to be a plain object.
+    - **Lint and build:** ESLint clean. `npm run build` exits 0. The emitted `.d.ts` exposes only `determineArrayType(arr, options?): string` and no internals.
+    - **Tests:** Jest 17 suites / 349 tests pass.
+    - **Scratch check:** a throwaway script outside the repo ran the plan's cycle-table cases against `dist/index.js`, and 12/12 matched, including getter-error propagation (the same error object). The permanent tests come in Step 7.
 
-- [ ] ⬜ **Step 4 — Built-in identification helper**
+- [ ] 🟦 **Step 4 — Built-in identification helper**
   - **Change/boundary:** Add a private `identifyBuiltIn(value: object): string | undefined` that follows the P4 table. Narrow catches only. Guarded availability.
   - **Dependencies:** Step 2.
   - **Verification/test intent:** Step 7, groups B and C.

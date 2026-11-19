@@ -140,7 +140,6 @@ function identifyError(value: object): string | undefined {
  * Returns the label of a supported JavaScript built-in, or `undefined` when the value is not one of them.
  * User-defined subclasses report the built-in they extend.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used from Step 5 of SSH-1 (ignoreCustomClassNames)
 function identifyBuiltIn(value: object): string | undefined {
   for (const { label, check, args } of BRAND_CHECKS) {
     if (check && passesBrandCheck(check, value, args)) {
@@ -222,6 +221,12 @@ function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | un
           return classToCheck.name;
         }
       }
+    }
+
+    // Ignore custom class names: supported built-ins keep their label, every other object is just 'object'.
+    // Such objects are never expanded, so verboseObjects does not apply to them.
+    if (options?.ignoreCustomClassNames) {
+      return identifyBuiltIn(value) ?? 'object';
     }
 
     // Handle TypedArrays
@@ -428,9 +433,10 @@ function classifyArrayLevel(arr: unknown[], options: DetermineArrayTypeOptions |
     return nonEmptyArraysType;
   }
   // Special handling for arrays of objects
-  // First check if all elements are objects (not arrays, null or class instances)
-  let allObjects = true;
-  for (const item of arr) {
+  // First check if all elements are objects (not arrays, null or class instances).
+  // Under ignoreCustomClassNames objects are compared by their final label, never by their keys, so this is skipped.
+  let allObjects = !options?.ignoreCustomClassNames;
+  for (const item of allObjects ? arr : []) {
     const isRegularObject = typeof item === 'object'
       && item !== null
       && !Array.isArray(item)

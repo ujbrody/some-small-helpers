@@ -22,9 +22,9 @@ updated_at: "2026-11-19"
 
 ## Plan dashboard
 
-**Current position:** 🟦 Ready (Step 5: `ignoreCustomClassNames` classification)  
-**Progress:** `4 of 8 steps complete`  
-**Next action:** `Call identifyBuiltIn from getDetailedType under ignoreCustomClassNames and skip the plain-object key check`  
+**Current position:** 🟦 Ready (Step 6: Discovery and the unified level comparison)  
+**Progress:** `5 of 8 steps complete`  
+**Next action:** `Replace classifyArrayLevel with the unified level algorithm and add discovery to getDetailedType`  
 **Awaiting:** `Nothing`  
 **Blocker:** `None`
 
@@ -34,8 +34,8 @@ updated_at: "2026-11-19"
 | 🟩 Complete | 2. Option types | Three optional fields added. ESLint clean, build passes, emitted `.d.ts` shows them, 349 tests pass. |
 | 🟩 Complete | 3. Recursion context and cycle protection | Wrapper, internal function and level body split. `'<circular>'` at both traversal points. 349 tests pass. 12/12 scratch cycle checks match the plan. |
 | 🟩 Complete | 4. Built-in identification helper | Private `identifyBuiltIn` added. 349 tests pass. 61/61 scratch checks. DataView uses the `buffer` getter (see evidence). |
-| 🟦 Ready | 5. `ignoreCustomClassNames` classification | — |
-| ⬜ Not started | 6. Discovery and the unified level comparison | — |
+| 🟩 Complete | 5. `ignoreCustomClassNames` classification | Option active. 349 tests pass. 45/45 scratch option checks. Earlier scratch checks still pass. |
+| 🟦 Ready | 6. Discovery and the unified level comparison | — |
 | ⬜ Not started | 7. Runtime tests | — |
 | ⬜ Not started | 8. Docs, lint, build and type check | — |
 
@@ -382,14 +382,29 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
     - **Lint, build and tests:** ESLint clean. `npm run build` exits 0, and the `.d.ts` has no internals. Jest 349/349.
     - **Scratch check:** a throwaway script outside the repo transpiled the source in memory and called the private helper. 61/61 matched: every supported type, including the guarded ones (all present in Node 26.13.0); subclasses (`MyDate`, `AppError`, `BadInput`, `MyMap`, `Bytes`, `Buffer` → `'Uint8Array'`, `MyPromise`); a class named `Date`, a spoofed `toStringTag`, a swapped `Date.prototype`, a Proxy around a `Map`, plain and custom objects, and the deferred types (Intl, `WeakRef`, `FinalizationRegistry`, Temporal, `URL`), all → not built-in; a detached `DataView` → `'DataView'`; cross-realm `Map`, `Date`, `TypeError` → `'Error'` and `Promise` → not built-in; a Proxy trap error propagated as the same object.
 
-- [ ] 🟦 **Step 5 — `ignoreCustomClassNames` classification**
+- [x] 🟩 **Step 5 — `ignoreCustomClassNames` classification**
   - **Change/boundary:** In `getDetailedType`'s object branch, after `identifyClasses` and before the typed-array allowlist and constructor-name checks: when the option is set, return `identifyBuiltIn(value) ?? 'object'`.
   - **Dependencies:** Steps 3 and 4.
   - **Verification/test intent:** Step 7, groups A, D and H.
   - **Documentation impact:** Document the option.
-  - **Current result/evidence:** —
+  - **Current result/evidence:** 2026-11-19, in `src/functions/determineArrayType.ts`.
+    - **Option branch:** `getDetailedType` returns `identifyBuiltIn(value) ?? 'object'` under the option, after `identifyClasses`.
+    - **Key check:** the plain-object key comparison in `classifyArrayLevel` is skipped when the option is set.
+    - **Lint exception removed:** the temporary `no-unused-vars` disable from Step 4 is gone.
+    - **Lint, build and tests:** ESLint clean. `npm run build` exits 0. Jest 349/349.
+    - **Scratch check:** a throwaway script outside the repo ran 45 cases against `dist/index.js`, and 45/45 matched:
+      - the six required examples;
+      - same-shape and different-shape objects under every `verboseObjects` setting;
+      - mixes and nested arrays;
+      - subclasses (`MyDate` → `'Date'`, `Buffer` → `'Uint8Array'`), and a class named `Date` → `'object'`;
+      - `null`, arrays, functions and primitives unchanged;
+      - `identifyClasses` beating the option (P2);
+      - a self-referencing class instance → `'object'` (not traversed);
+      - default and explicit-`false` regressions.
+    - **Earlier checks:** the Step 3 cycle check (12/12) and the Step 4 built-in check (61/61) still pass.
+    - Cases that depend on Step 6 (wildcards, discovery, removal of the arrays-of-arrays shortcut) are not covered yet.
 
-- [ ] ⬜ **Step 6 — Discovery and the unified level comparison**
+- [ ] 🟦 **Step 6 — Discovery and the unified level comparison**
   - **Change/boundary:**
     - Replace the level logic in `determineArrayType` with the unified algorithm: discovery, cell facts, wildcard removal (including `nullIsEmpty`), the deferred plain-object key check, and label comparison with the `'[mix]'` rule.
     - Remove the arrays-of-arrays shortcut.

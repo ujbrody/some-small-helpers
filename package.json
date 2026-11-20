@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "clean": "rimraf ./dist",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint ./src/**/*.ts",
     "test": "jest",
     "test:only": "jest --group=only",

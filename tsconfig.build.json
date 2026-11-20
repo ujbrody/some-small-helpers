@@ -1,15 +1,13 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "esnext",
-    "declaration": true,
-    "emitDeclarationOnly": true,
-    "strict": true,
-    "moduleResolution": "bundler",
-    "lib": ["es2020"],     // ensures bigint & modern lib types for tsd
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "outDir": "dist"
+    "noEmit": false,
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src"]
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
 }

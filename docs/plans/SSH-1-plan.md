@@ -22,9 +22,9 @@ updated_at: "2026-11-19"
 
 ## Plan dashboard
 
-**Current position:** 🟦 Ready (Step 6: Discovery and the unified level comparison)  
-**Progress:** `5 of 8 steps complete`  
-**Next action:** `Replace classifyArrayLevel with the unified level algorithm and add discovery to getDetailedType`  
+**Current position:** 🟦 Ready (Step 7: Runtime tests)  
+**Progress:** `6 of 8 steps complete`  
+**Next action:** `Add the Step 7 test groups A–I to determineArrayType.spec.ts`  
 **Awaiting:** `Nothing`  
 **Blocker:** `None`
 
@@ -35,8 +35,8 @@ updated_at: "2026-11-19"
 | 🟩 Complete | 3. Recursion context and cycle protection | Wrapper, internal function and level body split. `'<circular>'` at both traversal points. 349 tests pass. 12/12 scratch cycle checks match the plan. |
 | 🟩 Complete | 4. Built-in identification helper | Private `identifyBuiltIn` added. 349 tests pass. 61/61 scratch checks. DataView uses the `buffer` getter (see evidence). |
 | 🟩 Complete | 5. `ignoreCustomClassNames` classification | Option active. 349 tests pass. 45/45 scratch option checks. Earlier scratch checks still pass. |
-| 🟦 Ready | 6. Discovery and the unified level comparison | — |
-| ⬜ Not started | 7. Runtime tests | — |
+| 🟩 Complete | 6. Discovery and the unified level comparison | Unified algorithm and discovery in place. 349 tests pass. 92/92 + 6/6 scratch checks. Earlier checks still pass. |
+| 🟦 Ready | 7. Runtime tests | — |
 | ⬜ Not started | 8. Docs, lint, build and type check | — |
 
 **Status legend:** ⬜ Not started · 🟦 Ready · 🟨 In progress · 🟥 Blocked/decision needed · 🟩 Complete · ⏸️ Paused/deferred · ⛔ Cancelled
@@ -404,7 +404,7 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
     - **Earlier checks:** the Step 3 cycle check (12/12) and the Step 4 built-in check (61/61) still pass.
     - Cases that depend on Step 6 (wildcards, discovery, removal of the arrays-of-arrays shortcut) are not covered yet.
 
-- [ ] 🟦 **Step 6 — Discovery and the unified level comparison**
+- [x] 🟩 **Step 6 — Discovery and the unified level comparison**
   - **Change/boundary:**
     - Replace the level logic in `determineArrayType` with the unified algorithm: discovery, cell facts, wildcard removal (including `nullIsEmpty`), the deferred plain-object key check, and label comparison with the `'[mix]'` rule.
     - Remove the arrays-of-arrays shortcut.
@@ -413,9 +413,16 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
   - **Dependencies:** Steps 3 and 5.
   - **Verification/test intent:** Step 7, groups E, F, G, H and I.
   - **Documentation impact:** Document the level rule, wildcards, `nullIsEmpty`, discovery, precedence and recursion.
-  - **Current result/evidence:** —
+  - **Current result/evidence:** 2026-11-19, in `src/functions/determineArrayType.ts`.
+    - **Discovery:** `discoverType` (first match, no catch) runs at the start of `getDetailedType` unless `skipDiscovery` is set.
+    - **Cell description:** `describeCells` runs discovery once per cell, then classifies array cells, and records `matched`, `isArray`, `isAbsent` and `isArrayWildcard`.
+    - **Level comparison:** `classifyArrayLevel` is rewritten to the unified algorithm. It handles the all-wildcard results, wildcard removal (array wildcards give way only to a real array other than a discovered empty one), the plain-object key check on the remaining cells, and the final-label comparison with `'[mix]'` for differing undiscovered arrays. The arrays-of-arrays shortcut is removed.
+    - **Implementation clarification (A7):** array wildcards are recognized at any depth by `isWildcardArrayLabel`, so `'[[undefined]]'` is a wildcard too ("if A is a wildcard, [A] is a wildcard"). A first version only handled one bracket level, and the plan's case `[[[undefined]], [[1]]]` → `'[[number]]'` caught it; it's fixed.
+    - **Label collision:** a discovered label nested inside an array that is shaped like a wildcard label (for example a predicate returning `'[undefined]'`) is read as one one level up. It's documented like the `'<circular>'` collision.
+    - **Lint, build and tests:** ESLint clean. `npm run build` exits 0. Jest 349/349; no existing test changed output.
+    - **Scratch checks:** throwaway scripts outside the repo ran against `dist/index.js`. Step 6 cases: 92/92 (every required-example row, every predicate-table row, the A1–A9 cases, sparse arrays, first-match call counts, each cell seen once, recursion D1, error identity, P2 precedence, cycles with discovery and call counts, default regressions). Deeper wildcard cases: 6/6. Earlier scripts still pass: option 45/45, cycles 12/12, built-ins 61/61.
 
-- [ ] ⬜ **Step 7 — Runtime tests**
+- [ ] 🟦 **Step 7 — Runtime tests**
   - **Change/boundary:**
     - Add `describe` blocks in `determineArrayType.spec.ts`. Don't edit existing tests.
     - Each test must fail if its behavior is reverted.
@@ -566,6 +573,7 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
        - `[[1], [undefined]]` → `'[number]'` (today `'[mix]'`)
        - `[[1], [undefined, 2]]` → `'[number]'` (today `'[mix]'`, from the `undefined` wildcard inside)
        - `[[], [undefined]]` → `'[empty]'` per A8 (today `'[undefined]'`, because the empty array is skipped)
+       - `[[[]], [[1]]]` and `[[[undefined]], [[1]]]` → `'[[number]]'` (today `'[mix]'`; wildcards at any depth)
     4. **Cycles:** cyclic input that recurses until `RangeError` returns a summary containing `'<circular>'`, or a `'mix'` or `'[mix]'` that absorbs it.
   - **Everything else:**
     - For other inputs whose getters, traps and predicates return the same results throughout traversal, outputs are unchanged.

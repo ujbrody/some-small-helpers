@@ -166,7 +166,30 @@ function identifyBuiltIn(value: object): string | undefined {
 }
 
 
-function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | undefined, depth: number, context: Context): string {
+/**
+ * Returns the `discoveredType` of the first `discoverTypes` entry whose predicate matches the value.
+ * Later predicates are not evaluated once one matches. Errors thrown by predicates propagate unchanged.
+ */
+function discoverType(value: unknown, options: DetermineArrayTypeOptions | undefined): string | undefined {
+  for (const { predicate, discoveredType } of options?.discoverTypes ?? []) {
+    if (predicate(value)) {
+      return discoveredType;
+    }
+  }
+  return undefined;
+}
+
+
+function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | undefined, depth: number, context: Context, skipDiscovery = false): string {
+  // Caller-provided discovery takes precedence over everything else.
+  // skipDiscovery is set when the caller has already run discovery on this exact value.
+  if (!skipDiscovery) {
+    const discovered = discoverType(value, options);
+    if (discovered !== undefined) {
+      return discovered;
+    }
+  }
+
   const verboseObjects = options?.verboseObjects ?? 'top-level';
   // Handle null separately since typeof null returns 'object'
   if (value === null) {
@@ -403,74 +426,123 @@ function determineArrayTypeInternal(arr: unknown, options: DetermineArrayTypeOpt
 }
 
 
+/**
+ * What is known about one cell of the array being classified.
+ * Array identity is tracked separately from the label: a non-array whose discovered label is '[number]' is not an array.
+ */
+interface Cell {
+  value: unknown;
+  // Set for discovered cells and for arrays (whose label is needed to tell whether they are wildcards); otherwise computed on demand
+  label?: string;
+  // A discoverTypes predicate supplied the label
+  matched: boolean;
+  isArray: boolean;
+  // undefined, or null under nullIsEmpty (not discovered)
+  isAbsent: boolean;
+  // An array, not discovered, whose own type carries no element evidence (see isWildcardArrayLabel)
+  isArrayWildcard: boolean;
+}
+
+
+function isRegularObject(value: unknown): boolean {
+  return typeof value === 'object'
+    && value !== null
+    && !Array.isArray(value)
+    && (!value.constructor || value.constructor.name === 'Object');
+}
+
+
+/**
+ * Whether an array's label carries no element evidence: '[empty]', '[undefined]', '[null]' under nullIsEmpty,
+ * or any of these nested further ('[[undefined]]'), since an array of wildcards is itself a wildcard.
+ */
+function isWildcardArrayLabel(label: string, nullIsEmpty: boolean): boolean {
+  const emptyKinds = nullIsEmpty ? ['empty', 'undefined', 'null'] : ['empty', 'undefined'];
+  let inner = label;
+  while (inner.startsWith('[') && inner.endsWith(']')) {
+    inner = inner.slice(1, -1);
+    if (emptyKinds.includes(inner)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function describeCells(arr: unknown[], options: DetermineArrayTypeOptions | undefined, context: Context): Cell[] {
+  const nullIsEmpty = options?.nullIsEmpty === true;
+
+  // Discovery runs on every cell first, so each predicate sees each cell exactly once
+  const discovered = arr.map((value) => discoverType(value, options));
+
+  return arr.map((value, index) => {
+    const discoveredLabel = discovered[index];
+    const matched = discoveredLabel !== undefined;
+    const isArray = Array.isArray(value);
+    const label = matched || !isArray ? discoveredLabel : getDetailedType(value, options, 0, context, true);
+    return {
+      value,
+      label,
+      matched,
+      isArray,
+      isAbsent: !matched && (value === undefined || (nullIsEmpty && value === null)),
+      isArrayWildcard: !matched && isArray && isWildcardArrayLabel(label as string, nullIsEmpty),
+    };
+  });
+}
+
+
+/**
+ * Classifies one array level (the array is known to be non-empty):
+ * 1. every cell gets a label (discovered, or its full classification);
+ * 2. wildcards are removed: absent cells (undefined, null under nullIsEmpty) whenever another cell is present,
+ *    and wildcard arrays ('[empty]', '[undefined]', '[null]' under nullIsEmpty, at any depth) whenever a real array is present;
+ * 3. the remaining labels are compared: identical labels give that label, anything else a mix.
+ */
 function classifyArrayLevel(arr: unknown[], options: DetermineArrayTypeOptions | undefined, context: Context): string {
-  // Special handling for arrays of arrays where some might be empty
-  let nonEmptyArraysType: string | null = null;
-  let hasArrays = false;
-  let hasNonEmptyArrays = false;
-  // First check if we're dealing with an array of arrays
-  for (const item of arr) {
-    if (Array.isArray(item)) {
-      hasArrays = true;
-      // Skip empty arrays
-      if (item.length === 0) {
-        continue;
-      }
-      hasNonEmptyArrays = true;
-      // Get the type of this non-empty array
-      const arrayType = getDetailedType(item, options, 0, context);
-      if (nonEmptyArraysType === null) {
-        // This is the first non-empty array we've found
-        nonEmptyArraysType = arrayType;
-      } else if (nonEmptyArraysType !== arrayType) {
-        // If we find different types among non-empty arrays, return [mix]
-        return '[mix]';
-      }
+  const cells = describeCells(arr, options, context);
+  const present = cells.filter((cell) => !cell.isAbsent && !cell.isArrayWildcard);
+
+  // Only wildcards: report the kind of emptiness
+  if (present.length === 0) {
+    const arrayWildcards = cells.filter((cell) => cell.isArrayWildcard);
+    if (arrayWildcards.length > 0) {
+      // An empty array is still an array, so absent cells never make its parent 'empty'
+      const [{ label: firstLabel }] = arrayWildcards;
+      return arrayWildcards.every((cell) => cell.label === firstLabel) ? firstLabel as string : '[empty]';
+    }
+    if (cells.every((cell) => cell.value === undefined)) {
+      return 'undefined';
+    }
+    if (cells.every((cell) => cell.value === null)) {
+      return 'null';
+    }
+    return 'empty';
+  }
+
+  // Wildcard arrays only give way to a real array. A discovered empty array does not count as one.
+  const hasRealArray = present.some((cell) => cell.isArray && !(cell.matched && (cell.value as unknown[]).length === 0));
+  const remaining = cells.filter((cell) => !cell.isAbsent && (!cell.isArrayWildcard || !hasRealArray));
+
+  // Plain objects (none discovered) are compared by their keys, and described by the first one.
+  // Under ignoreCustomClassNames objects are compared by their final label instead.
+  if (!options?.ignoreCustomClassNames && remaining.every((cell) => !cell.matched && isRegularObject(cell.value))) {
+    const [first] = remaining;
+    const firstKeys = Object.keys(first.value as object).sort().join(',');
+    if (remaining.some((cell) => Object.keys(cell.value as object).sort().join(',') !== firstKeys)) {
+      return 'mixed object';
+    }
+    return getDetailedType(first.value, options, 0, context, true);
+  }
+
+  // Compare the final labels
+  const labelOf = (cell: Cell) => cell.label ?? getDetailedType(cell.value, options, 0, context, true);
+  const firstLabel = labelOf(remaining[0]);
+  for (const cell of remaining.slice(1)) {
+    if (labelOf(cell) !== firstLabel) {
+      // Arrays of different element types (none discovered) keep the '[mix]' notation
+      return remaining.every((other) => other.isArray && !other.matched) ? '[mix]' : 'mix';
     }
   }
-  // If we found arrays and some were non-empty, return the determined type
-  if (hasArrays && hasNonEmptyArrays && nonEmptyArraysType !== null) {
-    return nonEmptyArraysType;
-  }
-  // Special handling for arrays of objects
-  // First check if all elements are objects (not arrays, null or class instances).
-  // Under ignoreCustomClassNames objects are compared by their final label, never by their keys, so this is skipped.
-  let allObjects = !options?.ignoreCustomClassNames;
-  for (const item of allObjects ? arr : []) {
-    const isRegularObject = typeof item === 'object'
-      && item !== null
-      && !Array.isArray(item)
-      && (!item.constructor || item.constructor.name === 'Object');
-    if (!isRegularObject) {
-      allObjects = false;
-      break;
-    }
-  }
-  // If all elements are regular objects, handle their property comparison
-  if (allObjects) {
-    // Get the keys of the first object as a reference
-    const firstObjKeys = Object.keys(arr[0] as object).sort().join(',');
-    // Check if all objects have the same keys
-    for (let i = 1; i < arr.length; i += 1) {
-      const currentObjKeys = Object.keys(arr[i] as object).sort().join(',');
-      if (currentObjKeys !== firstObjKeys) {
-        // If objects have different structures, return "[mixed object]"
-        return 'mixed object';
-      }
-    }
-    // All objects have the same structure, return the detailed type of the first one
-    return getDetailedType(arr[0], options, 0, context);
-  }
-  // If all arrays were empty, or we're not dealing with arrays of arrays,
-  // fall back to the original logic
-  // Get the type of the first element to compare with others
-  const firstType = getDetailedType(arr[0], options, 0, context);
-  // Check if all elements have the same type
-  for (let i = 1; i < arr.length; i += 1) {
-    if (getDetailedType(arr[i], options, 0, context) !== firstType) {
-      return 'mix';
-    }
-  }
-  // If we've made it here, all elements have the same type
-  return firstType;
+  return firstLabel;
 }

@@ -1,4 +1,4 @@
-import type AnyClass from '~types/AnyClass';
+import type AnyClass from '../types/AnyClass';
 
 interface DetermineArrayTypeOptions {
   verboseObjects?: 'all' | 'none' | 'top-level';

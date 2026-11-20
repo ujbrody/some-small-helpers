@@ -50,4 +50,4 @@ expectNotAssignable<PersonOptions>({ order: 'ascending', comparisonFunc: personC
 
 // ---------- BigInt typing ----------
 expectType<ComparisonResult>(compare(10n, 2n));
-expectError(compare(10n as any, 2)); // mixing bigint and number at type level should be avoided
+expectError(compare(10n, 2)); // mixing bigint and number at type level should be avoided

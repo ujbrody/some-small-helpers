@@ -80,7 +80,7 @@ Several default-mode outputs change (see Compatibility), so a major version is s
 | 7 | (not mentioned) | `undefined` cells are wildcards in default mode, and a new `nullIsEmpty` option makes `null` cells wildcards too | Uri, 2026-11-19 |
 | 8 | (not mentioned) | Default-mode output changes: see Compatibility | Follows from #5–#7 |
 | 9 | (not mentioned) | Two stale JSDoc statements corrected (`mixed` → `mix`, and the wrong example) | AGENTS.md doc-accuracy rule |
-| 10 | (not mentioned) | Comparing every object's properties exhaustively is deferred and recorded here. No new issue is created. | Uri, 2026-11-19 |
+| 10 | (not mentioned) | Comparing every object's properties exhaustively is deferred. Tracked in SSH-4, created 2026-11-20 at Uri's request. | Uri, 2026-11-19 |
 
 ## Outcome and boundaries
 
@@ -619,7 +619,7 @@ Stop and go back to Uri if:
 - the baseline differs from the `AGENTS.md` record in a way that hides new regressions;
 - implementation would depart from the approved plan revision.
 
-## Deferred work (recorded here; no new issue)
+## Deferred work (tracked in SSH-4)
 
 - **Exhaustive object comparison.** The plain-object key check compares key sets across objects but describes only the first object's property types. Comparing every object's property types is deferred.
 - **Deferred built-ins:** Temporal, Intl, `WeakRef`, `FinalizationRegistry`.

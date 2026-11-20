@@ -64,7 +64,7 @@ function intrinsicMethod(prototype: object | undefined, key: string): Intrinsic 
 }
 
 // Each check throws a TypeError unless the value has the corresponding internal slot.
-const BRAND_CHECKS: { label: string; check: Intrinsic | undefined; args: unknown[] }[] = [
+const BRAND_CHECK_DEFINITIONS: { label: string; check: Intrinsic | undefined; args: unknown[] }[] = [
   { label: 'Date', check: intrinsicMethod(Date.prototype, 'getTime'), args: [] },
   { label: 'RegExp', check: intrinsicGetter(RegExp.prototype, 'source'), args: [] },
   { label: 'Map', check: intrinsicGetter(Map.prototype, 'size'), args: [] },
@@ -81,6 +81,28 @@ const BRAND_CHECKS: { label: string; check: Intrinsic | undefined; args: unknown
   { label: 'BigInt', check: intrinsicMethod(prototypeOfGlobal('BigInt'), 'valueOf'), args: [] },
   { label: 'Symbol', check: intrinsicMethod(Symbol.prototype, 'valueOf'), args: [] },
 ];
+
+/*
+ * The TypeError a brand check throws belongs to the realm of the intrinsic, which is not necessarily the realm of the
+ * global `TypeError` (Jest's environment, for example, shares some host built-ins such as ArrayBuffer with a sandboxed realm).
+ * So each check's failure is recorded once, by running it on a plain object, and only that exact error type counts as
+ * "not this type". Anything else is rethrown.
+ */
+function failurePrototypeOf(check: Intrinsic, args: unknown[]): object | undefined {
+  try {
+    Reflect.apply(check, {}, args);
+  } catch (error) {
+    return typeof error === 'object' && error !== null ? Object.getPrototypeOf(error) as object : undefined;
+  }
+  return undefined;
+}
+
+const BRAND_CHECKS: { label: string; check: Intrinsic; args: unknown[]; failurePrototype: object | undefined }[] = [];
+for (const { label, check, args } of BRAND_CHECK_DEFINITIONS) {
+  if (check) {
+    BRAND_CHECKS.push({ label, check, args, failurePrototype: failurePrototypeOf(check, args) });
+  }
+}
 
 // The intrinsic %TypedArray%.prototype[Symbol.toStringTag] getter returns the element type name from the internal slot,
 // or undefined (without throwing) for anything that is not a typed array.
@@ -106,13 +128,13 @@ for (const name of ['TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 
 // Error.isError checks the internal slot (cross-realm, no user code). It is not available on every runtime.
 const isErrorIntrinsic = asIntrinsic((Error as unknown as Record<string, unknown>).isError);
 
-function passesBrandCheck(check: Intrinsic, value: object, args: unknown[]): boolean {
+function passesBrandCheck(check: Intrinsic, value: object, args: unknown[], failurePrototype: object | undefined): boolean {
   try {
     Reflect.apply(check, value, args);
     return true;
   } catch (error) {
     // Only the brand check's own failure means "not this type". The check runs no user code, but rethrow anything else.
-    if (error instanceof TypeError) {
+    if (failurePrototype && typeof error === 'object' && error !== null && Object.getPrototypeOf(error) === failurePrototype) {
       return false;
     }
     throw error;
@@ -141,8 +163,8 @@ function identifyError(value: object): string | undefined {
  * User-defined subclasses report the built-in they extend.
  */
 function identifyBuiltIn(value: object): string | undefined {
-  for (const { label, check, args } of BRAND_CHECKS) {
-    if (check && passesBrandCheck(check, value, args)) {
+  for (const { label, check, args, failurePrototype } of BRAND_CHECKS) {
+    if (passesBrandCheck(check, value, args, failurePrototype)) {
       return label;
     }
   }
@@ -317,29 +339,54 @@ function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | un
 
 
 /**
- * Determines the type of an array by checking the type of its elements. The returned types are as follows:
+ * Determines the type of an array by checking the type of its elements, and returns it as a summary string.
  *
- * - `empty`: The array is empty.
- * - `number`: The array contains only numbers.
- * - `string`: The array contains only strings.
- * - `boolean`: The array contains only booleans.
- * - `function`: The array contains only functions.
- * - `symbol`: The array contains only symbols.
- * - `null`: The array contains only null.
- * - `undefined`: The array contains only undefined.
- * - `mixed`: The array contains a mix of types.
+ * How the type is determined
+ * ==========================
+ * Every cell of the array gets a label, and the labels are compared:
  *
- * If the array contains arrays, then similar rules apply only they are returned in square brackets:
+ * - If every label is the same, that label is the type of the array: `[1, 2]` → `'number'`.
+ * - If the labels differ, the type is `'mix'`: `[1, 'a']` → `'mix'`.
+ *   When every cell is an array and their element types differ, it is `'[mix]'`: `[[1], ['a']]` → `'[mix]'`.
  *
- * - `[empty]`: The array is empty.
- * - `[number]`: The array contains only numbers.
- * - `[string]`: The array contains only strings.
- * - etc.
+ * Labels:
  *
- * If the array contains instances of classes, then the type returned is the name of the class.
+ * - Primitives and special values: `'number'`, `'string'`, `'boolean'`, `'symbol'`, `'function'`, `'null'`, `'undefined'`.
+ * - Arrays: the type of their own elements, in square brackets, determined by the same rules: `[[1], [2]]` → `'[number]'`.
+ *   An array with no cells is `'[empty]'`.
+ * - Class instances: the name of the class: `[new Foo(), new Foo()]` → `'Foo'`.
+ * - Plain objects: described by their properties, according to `verboseObjects`: `[{ a: 1 }]` → `'{ a: number }'`.
+ *   When every cell is a plain object they are compared by their keys: different keys give `'mixed object'`,
+ *   and otherwise the type is the description of the first object (the other objects' property types are not compared).
  *
- * If the array contains objects, then the type returned is the type of the first object in the array.
- * The syntax the function uses to describe the object depends on the `verboseObjects` option.
+ * Special results: `'not an array'` when the input is not an array, and `'empty'` for an array with no cells.
+ *
+ * Wildcards
+ * ---------
+ * Some cells carry no type information, so they do not "spoil" the type of the other cells:
+ *
+ * - `undefined` (including holes in sparse arrays): `[1, undefined, 2]` → `'number'`.
+ * - `null`, but only with `nullIsEmpty: true`. Otherwise `null` is a value like any other: `[1, null]` → `'mix'`.
+ * - Inside an array of arrays, an array whose own type is `'[empty]'` or `'[undefined]'` (or `'[null]'` with `nullIsEmpty`),
+ *   at any depth: `[[1, 2], [], [3]]` → `'[number]'`, `[[1], [undefined]]` → `'[number]'`.
+ *   These only give way to another array. Next to other values an empty array is a value: `[1, []]` → `'mix'`.
+ *
+ * When every cell is a wildcard:
+ *
+ * - only `undefined` → `'undefined'`; only `null` → `'null'`;
+ * - `null` and `undefined` → `'null'` (`null` is a value), or `'empty'` with `nullIsEmpty`;
+ * - wildcard arrays → their common type, or `'[empty]'` when they differ: `[[], [undefined]]` → `'[empty]'`.
+ *   An empty array is still an array, so `[[], undefined]` → `'[empty]'`, never `'empty'`.
+ *
+ * A cell labelled by a `discoverTypes` predicate is never a wildcard.
+ *
+ * Circular references
+ * -------------------
+ * When following an array, or expanding an object, would revisit one of its own ancestors, that spot is labelled
+ * `'<circular>'` instead of recursing forever. This is a traversal marker, not a type, and it appears inside the normal
+ * notation: `'{ n: number, self: <circular> }'`, `'{ arr: [<circular>] }'`.
+ * The result is a summary, not a cycle report: when labels are compared the marker can be absorbed into `'mix'` or `'[mix]'`.
+ * A value referenced more than once without a cycle is described normally each time.
  *
  * @param {unknown} arr - The array to determine the type of.
  * @param {DetermineArrayTypeOptions} options - Options for type determination.
@@ -347,21 +394,27 @@ function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | un
  *
  * @example
  * ```typescript
- * const arr = [1, 'test', () => {}];
- * const type = determineArrayType(arr);
+ * expect(determineArrayType([1, 'test', () => {}])).toBe('mix');
+ * expect(determineArrayType([[1, 2], [], [3, undefined]])).toBe('[number]');
  *
- * expect(type).toBe('[number, string, function]');
+ * const node: Record<string, unknown> = { n: 1 };
+ * node.self = node;
+ * expect(determineArrayType([node], { verboseObjects: 'all' })).toBe('{ n: number, self: <circular> }');
  * ```
  *
  * Options
  * =======
+ * Precedence: a matching `discoverTypes` predicate is applied first, then `identifyClasses`, then the automatic rules
+ * (including `ignoreCustomClassNames`). All options apply at every depth that is classified.
+ *
  * `verboseObjects`
  * -------------
  * *Defaults to* `'top-level'`
  *
- * When set to `'top-level'` the function will only show the type of the first object in the array.
- * When set to `'all'` the function will show the type of all objects in the array.
- * When set to `'none'` the function will not show the type of the objects in the array.
+ * Controls how plain objects are described:
+ * When set to `'top-level'` objects in the array are described by their properties, and nested objects are just `'object'`.
+ * When set to `'all'` nested objects are described as well, at every depth.
+ * When set to `'none'` objects are just `'object'`.
  *
  * @example
  * ```typescript
@@ -381,14 +434,17 @@ function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | un
  * expect(type3).toBe('object');
  * ```
  *
- * *Note:* Regardless of the `verboseObjects` option, if the structure of the objects in the array are different, the function will always return `'mixed object'`.
+ * *Note:* Regardless of the `verboseObjects` option, if the structure of the objects in the array are different, the function will always return `'mixed object'`
+ * (unless `ignoreCustomClassNames` is set, which describes every plain object as just `'object'`).
  *
  * `identifyClasses`
  * ----------------
  * *Defaults to* `[]`
  *
  * An array of classes that the function will identify and return the name of the class.
- * This option takes precedence over returning the class name, and therefore allows to target base classes:
+ * The first class in the list that the value is an instance of is used.
+ * This option takes precedence over returning the class name, and therefore allows to target base classes.
+ * It also applies under `ignoreCustomClassNames`, and only a matching `discoverTypes` predicate takes precedence over it:
  *
  * @example
  * ```typescript
@@ -397,8 +453,76 @@ function getDetailedType(value: unknown, options: DetermineArrayTypeOptions | un
  *
  * const arr = [new BaseClass(), new SubClass()];
  *
- * expect(determineArrayType(arr)).toBe('SubClass');
+ * expect(determineArrayType(arr)).toBe('mix'); // 'BaseClass' vs 'SubClass'
  * expect(determineArrayType(arr, { identifyClasses: [BaseClass] })).toBe('BaseClass');
+ * ```
+ *
+ * `ignoreCustomClassNames`
+ * ----------------------
+ * *Defaults to* `false`
+ *
+ * When `true`, plain objects and instances of user-defined or third-party classes are all just `'object'`,
+ * regardless of their properties or of `verboseObjects` (they are never expanded).
+ * Supported JavaScript built-ins keep their type, and a user-defined subclass of one reports the built-in it extends:
+ *
+ * - `Date`, `RegExp`, `Map`, `Set`, `WeakMap`, `WeakSet`, `Promise`
+ * - `ArrayBuffer`, `SharedArrayBuffer`, `DataView`
+ * - typed arrays: `Int8Array`, `Uint8Array`, `Uint8ClampedArray`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`,
+ *   `Float16Array`, `Float32Array`, `Float64Array`, `BigInt64Array`, `BigUint64Array`
+ * - errors: `Error`, `TypeError`, `RangeError`, `ReferenceError`, `SyntaxError`, `EvalError`, `URIError`, `AggregateError`, `SuppressedError`
+ *   (a custom error reports the nearest standard error type it extends)
+ * - boxed primitives: `Number`, `String`, `Boolean`, `BigInt`, `Symbol`
+ *
+ * Types the runtime does not provide are skipped. Other built-ins (such as `Intl`, `Temporal`, `WeakRef`, `FinalizationRegistry`)
+ * and host objects (such as `URL`, DOM nodes or Node's streams) are `'object'`; Node's `Buffer` is a `'Uint8Array'`.
+ *
+ * Built-ins are recognized by what a value actually is, not by its constructor name, so a user-defined class named `Date` is
+ * still `'object'`. Detection limits: values from another realm (an iframe, a worker, `vm`) are recognized, except `Promise`,
+ * and errors from another realm are reported as `'Error'`. `Promise` and, on runtimes without `Error.isError`, errors
+ * are recognized through their prototype chain, so an object given their prototype can pass for one. Proxies are not built-ins.
+ *
+ * @example
+ * ```typescript
+ * class Foo {}
+ * class MyDate extends Date {}
+ *
+ * expect(determineArrayType([new Foo(), { a: 1 }], { ignoreCustomClassNames: true })).toBe('object');
+ * expect(determineArrayType([new Date(), new MyDate()], { ignoreCustomClassNames: true })).toBe('Date');
+ * expect(determineArrayType([new Date(), new Map()], { ignoreCustomClassNames: true })).toBe('mix');
+ * ```
+ *
+ * `nullIsEmpty`
+ * -----------
+ * *Defaults to* `false`
+ *
+ * When `true`, `null` cells are wildcards, like `undefined` (see "Wildcards" above). When `false`, `null` is always a value.
+ *
+ * @example
+ * ```typescript
+ * expect(determineArrayType([1, null])).toBe('mix');
+ * expect(determineArrayType([1, null], { nullIsEmpty: true })).toBe('number');
+ * expect(determineArrayType([null, undefined], { nullIsEmpty: true })).toBe('empty');
+ * ```
+ *
+ * `discoverTypes`
+ * -------------
+ * *Defaults to* `[]`
+ *
+ * Caller-defined types: a list of `{ predicate, discoveredType }` entries. Each value that is classified, at any depth
+ * (cells, nested cells and expanded property values), is passed to the predicates in order; the first one that returns
+ * `true` gives the value its `discoveredType`, and the remaining predicates are not called for it. A discovered value is not
+ * looked into any further. When no predicate matches, the value is classified as usual.
+ *
+ * Discovered labels are compared like any other label, so a discovered cell and an ordinary cell with the same label match.
+ * Errors thrown by predicates propagate unchanged.
+ *
+ * @example
+ * ```typescript
+ * class Decimal {}
+ * const decimalIsNumber = { predicate: (value: unknown) => value instanceof Decimal, discoveredType: 'number' };
+ *
+ * expect(determineArrayType([new Decimal(), 2], { discoverTypes: [decimalIsNumber] })).toBe('number');
+ * expect(determineArrayType([{ price: new Decimal() }], { discoverTypes: [decimalIsNumber] })).toBe('{ price: number }');
  * ```
  */
 export default function determineArrayType(arr: unknown, options?: DetermineArrayTypeOptions) {

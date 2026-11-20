@@ -2,7 +2,7 @@
 type: implementation-plan
 workflow_id: engineering.delivery
 workflow_version: ""
-status: approved
+status: implemented
 plan_version: "9"
 owner: primary_implementer
 authoritative_parent: "Linear SSH-1, with scope departures listed under Plan authority (pending Uri's approval)"
@@ -22,9 +22,9 @@ updated_at: "2026-11-19"
 
 ## Plan dashboard
 
-**Current position:** 🟦 Ready (Step 7: Runtime tests)  
-**Progress:** `6 of 8 steps complete`  
-**Next action:** `Add the Step 7 test groups A–I to determineArrayType.spec.ts`  
+**Current position:** 🟩 Complete (all steps)  
+**Progress:** `8 of 8 steps complete`  
+**Next action:** `Uri reviews the change; then decide on commit, independent review, versioning and the Linear update`  
 **Awaiting:** `Nothing`  
 **Blocker:** `None`
 
@@ -36,8 +36,8 @@ updated_at: "2026-11-19"
 | 🟩 Complete | 4. Built-in identification helper | Private `identifyBuiltIn` added. 349 tests pass. 61/61 scratch checks. DataView uses the `buffer` getter (see evidence). |
 | 🟩 Complete | 5. `ignoreCustomClassNames` classification | Option active. 349 tests pass. 45/45 scratch option checks. Earlier scratch checks still pass. |
 | 🟩 Complete | 6. Discovery and the unified level comparison | Unified algorithm and discovery in place. 349 tests pass. 92/92 + 6/6 scratch checks. Earlier checks still pass. |
-| 🟦 Ready | 7. Runtime tests | — |
-| ⬜ Not started | 8. Docs, lint, build and type check | — |
+| 🟩 Complete | 7. Runtime tests | 117 new tests; 466/466 pass. Found and fixed a realm bug in the brand-check catch (see evidence). |
+| 🟩 Complete | 8. Docs, lint, build and type check | JSDoc rewritten; 35/35 doc claims verified. Lint, 466 tests, build, `tsd` (known failure only) and typecheck all as expected. |
 
 **Status legend:** ⬜ Not started · 🟦 Ready · 🟨 In progress · 🟥 Blocked/decision needed · 🟩 Complete · ⏸️ Paused/deferred · ⛔ Cancelled
 
@@ -258,7 +258,7 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
 
 - **Check order:** checks that run no user code come first, then the Error family, then `Promise`.
 - **Guards:** every check is guarded by an availability test.
-- **Narrow catches:** a `try/catch` wraps only an intrinsic call from the "No" rows. It catches only `TypeError` and rethrows anything else.
+- **Narrow catches:** a `try/catch` wraps only an intrinsic call from the "No" rows. It catches only `TypeError` and rethrows anything else. (Since Step 7 this is realm-correct: only the exact error type each check throws, recorded at module load, counts as "not this type".)
 - **Fallback:** anything not detected gives `'object'`.
 - **Unsupported under the option:**
   - Temporal, Intl, `WeakRef`, `FinalizationRegistry`.
@@ -422,7 +422,7 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
     - **Lint, build and tests:** ESLint clean. `npm run build` exits 0. Jest 349/349; no existing test changed output.
     - **Scratch checks:** throwaway scripts outside the repo ran against `dist/index.js`. Step 6 cases: 92/92 (every required-example row, every predicate-table row, the A1–A9 cases, sparse arrays, first-match call counts, each cell seen once, recursion D1, error identity, P2 precedence, cycles with discovery and call counts, default regressions). Deeper wildcard cases: 6/6. Earlier scripts still pass: option 45/45, cycles 12/12, built-ins 61/61.
 
-- [ ] 🟦 **Step 7 — Runtime tests**
+- [x] 🟩 **Step 7 — Runtime tests**
   - **Change/boundary:**
     - Add `describe` blocks in `determineArrayType.spec.ts`. Don't edit existing tests.
     - Each test must fail if its behavior is reverted.
@@ -531,9 +531,18 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
     - The plain-object check still describes only the first object.
   - **Dependencies:** Steps 3–6.
   - **Documentation impact:** None.
-  - **Current result/evidence:** —
+  - **Current result/evidence:** 2026-11-20, in `src/functions/determineArrayType.spec.ts`.
+    - **New tests:** 117 tests appended in new top-level `describe` blocks: ignoreCustomClassNames, discoverTypes, precedence, cycles (run in 4 modes), wildcards and nullIsEmpty, and default behavior preserved (run with the options omitted and explicitly `false`). The existing tests are unedited.
+    - **Guards:** feature-dependent tests use `testIf` availability guards. None were skipped on Node 26.13.0.
+    - **Realms:** cross-realm values come from `node:vm`.
+    - **Results:** focused spec 138/138. Full suite 17 suites / 466 tests. ESLint clean on both files. `npm run build` exits 0. `npm run tsd` shows only the known `compare.test-d.ts:53` failure.
+    - **Bug found and fixed (Step 4 helper):**
+      - **Cause:** under Jest, some globals (for example `ArrayBuffer`) come from Node's main realm while `TypeError` comes from Jest's sandbox realm. A failing brand check therefore threw the main realm's `TypeError`. The narrow catch (`error instanceof TypeError`) didn't recognize it and rethrew it, so `ignoreCustomClassNames` threw for any value that wasn't an ArrayBuffer. That would affect library consumers testing with Jest. The single-realm scratch scripts didn't catch it.
+      - **Fix:** at module load, each brand check runs once on `{}` and records the prototype of the error it throws. Only an error with exactly that prototype counts as "not this type", and anything else is still rethrown. The plan's narrow-catch intent is kept, and the comparison is now realm-correct.
+    - **Earlier scripts after the fix:** 92/92, 45/45, 12/12, 61/61 and 6/6.
+    - **Note:** under the original implementation, the new spec doesn't compile, because the options don't exist there. So "fails when reverted" is shown per behavior by the scratch checks and by this bug being caught.
 
-- [ ] ⬜ **Step 8 — Docs, lint, build and type check**
+- [x] 🟩 **Step 8 — Docs, lint, build and type check**
   - **Change/boundary:**
     - Rewrite the function's JSDoc overview to describe the unified level rule: labels, wildcards (`undefined`, `null` under `nullIsEmpty`, empty arrays among arrays), `'[mix]'` versus `'mix'`, and the all-wildcard results.
     - Add JSDoc for `ignoreCustomClassNames`, `discoverTypes` and `nullIsEmpty`.
@@ -548,7 +557,22 @@ Applies only under `ignoreCustomClassNames: true`. Default-mode detection is unc
     - Run `npm run build` and inspect `dist/functions/determineArrayType.d.ts`: the three new options should be present, the internal context and helpers absent, and no `es2021+` types should leak.
     - Run `npm run tsd`. The only failure should be the known baseline one.
   - **Documentation impact:** The JSDoc is the documentation.
-  - **Current result/evidence:** —
+  - **Current result/evidence:** 2026-11-20.
+    - **JSDoc rewrite** of `determineArrayType` covers:
+      - how the type is determined (labels, `'mix'` / `'[mix]'`, the plain-object key check and its first-object limitation);
+      - wildcards and the all-wildcard results;
+      - circular references (`'<circular>'` as a marker, a summary rather than a report);
+      - precedence;
+      - each option: `verboseObjects` (wording corrected), `identifyClasses` (first match, precedence), and the new `ignoreCustomClassNames` (supported set, subclasses, detection limits), `nullIsEmpty` and `discoverTypes`.
+    - **Stale statements corrected:** three, not two. `mixed` → `mix`; the `[1, 'test', () => {}]` example (`'mix'`, not `'[number, string, function]'`); and the `identifyClasses` example, which claimed `[new BaseClass(), new SubClass()]` → `'SubClass'` when it actually gives `'mix'`.
+    - **Examples verified:** a throwaway script checked 35 JSDoc statements and examples against the built output, and all 35 matched.
+    - **ESLint:** the changed files and `npm run lint` (the whole of `src`) are clean.
+    - **Tests:** Jest 17 suites / 466 tests pass.
+    - **Build:** `npm run build` exits 0.
+    - **`tsd`:** only the known `compare.test-d.ts:53` failure.
+    - **Typecheck:** `npm run typecheck` (new, see below) exits 0.
+    - **Emitted declaration:** `dist/functions/determineArrayType.d.ts` exposes only `DetermineArrayTypeOptions`, with the three new optional fields, and `determineArrayType(arr, options?): string`. No internals and no `es2021+` types; those names appear only in JSDoc text. `dist/index.d.ts` still re-exports it, and no spec files are emitted.
+    - **Changes outside this plan, found in the working tree:** `package.json` (build → `tsc -p tsconfig.build.json`, new `typecheck` script), `tsconfig.json` (spec files included, `types: ["jest", "node"]`, `noEmit`, `paths` without `baseUrl`), `tsconfig.build.json` (now extends `tsconfig.json`, excludes specs) and a new `.vscode/settings.json` (workspace TypeScript). These were not made by this implementation. They correspond to the editor-types fix discussed on 2026-11-20. The Step 8 checks above ran with them in place.
 
 ## Assurance and operations
 
@@ -615,11 +639,28 @@ Stop and go back to Uri if:
 | 2026-11-19 | v7: A5 (all-`null` → `'null'` in both modes), A6 (an empty array never makes its parent `'empty'`) and A7 settled. A7 replaces the length-only empty-array wildcard: in an array of arrays, `'[empty]'` and `'[undefined]'` are always wildcards, and `'[null]'` is one under `nullIsEmpty`. A8 (differing array wildcards → `'[empty]'`) derived from these rules, pending confirmation. Tests and compatibility list updated. | Uri's sixth clarification | A5–A7 accepted; plan superseded by v8 |
 | 2026-11-19 | v8: A8 settled for `nullIsEmpty: true`: different array wildcards give `'[empty]'`, and identical ones keep their label. The `nullIsEmpty: false` case is raised as A9, because Uri's answer (a mix) conflicts with the A7 wildcard rule and the single-value analogy (`'[null]'`). | Uri's seventh clarification | A8 accepted; plan superseded by v9 |
 | 2026-11-19 | v9: A9 settled. With `nullIsEmpty: false`, `null` is always a value, so `'[null]'` is an ordinary array type and wildcard arrays give way to it (`[[undefined], [null], []]` → `'[null]'`). No ambiguities remain. | Uri's eighth clarification | A9 accepted. Uri approved plan v9 for execution on 2026-11-19 ("Let's start executing", then confirmed). |
+| 2026-11-19 | Step 4: DataView detection uses the `buffer` getter instead of `byteLength`, because `byteLength` throws for detached buffers | Found during Step 4 verification | Implementation detail within the approved intent |
+| 2026-11-19 | Step 6: array wildcards are recognized at any depth (`'[[undefined]]'`), as the plan's own example `[[[undefined]], [[1]]]` → `'[[number]]'` requires | Caught by the Step 6 scratch check | Within the approved A7 rule |
+| 2026-11-20 | Step 7: the brand-check catch was made realm-correct (it compares against the error type each check actually throws) instead of using `instanceof TypeError` | Caught by the Jest suite: in mixed-realm environments the old catch rethrew ordinary brand-check failures | Within the approved narrow-catch intent |
 
 ## Completion/result
 
 - **Implemented outcome:**
-- **Evidence:**
-- **Documentation:**
+  - `determineArrayType` has the unified level comparison, with wildcards and the arrays-of-arrays shortcut removed.
+  - Three new options: `ignoreCustomClassNames`, `nullIsEmpty` and `discoverTypes`.
+  - Cycle protection with `'<circular>'` in every mode.
+  - The public signature is unchanged. The changes are in `src/functions/determineArrayType.ts` and `src/functions/determineArrayType.spec.ts`.
+- **Evidence:** see each step. Final state, 2026-11-20: ESLint clean, Jest 466/466, build passes, `tsd` shows only the pre-existing failure, typecheck passes, and the emitted declaration has been inspected.
+- **Documentation:** the function's JSDoc is rewritten and every statement and example in it was verified against the build.
 - **Known limitations/residual risk:**
+  - **Default-mode output changes** for existing callers (see Compatibility), so a major version is suggested.
+  - **Label collisions:** labels that look like `'<circular>'` or like wildcard labels can collide with them.
+  - **Detection limits:** cross-realm values and prototype-based detection, as documented.
+  - **Deferred work:** exhaustive object comparison; Temporal, Intl, `WeakRef` and `FinalizationRegistry`.
+  - **Incidental, pre-existing:** the emitted declaration imports `~types/AnyClass`, a path alias that consumers can't resolve. It has always done this, and SSH-1 doesn't change it. It may be worth a separate issue.
+  - **Consumer impact:** the option type accepts only mutable arrays for `discoverTypes` and `identifyClasses`, as before. A caller using `as const` arrays has to copy them.
 - **Result packet/review/release links:**
+  - **Not committed.**
+  - **Independent review:** recommended for `T2`. Codex in read-only review mode, given the diff of the two source files.
+  - **Decisions for Uri:** the version bump, the npm release, and linking or summarizing this plan in SSH-1.
+- **Superseded scratch checks:** the throwaway scripts in the session scratchpad are not part of the repo.
